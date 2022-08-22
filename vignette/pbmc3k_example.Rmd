@@ -71,8 +71,8 @@ str(gene.set.list[1:10])
 # for the purpose of getting a record, we can create and save a dataframe which has the name of gene sets and the members of it.
 genes <- sapply(gene.set.list, 
        function(x)paste(x, collapse = ", "))
-gene.set.list.df <- data.frame(gene.set = names(gene.set.list), genes = genes)
-
+gene.set.list.df <- cbind(gene.set = names(gene.set.list), genes = genes)
+rownames(gene.set.list.df) <- 1:nrow(gene.set.list.df)
 head(gene.set.list.df)
 # can be output for record
 # write.csv(gene.set.list.df, "gene.set.list.df.csv")
@@ -95,9 +95,10 @@ pbmc3k <- NormalizeData(pbmc3k)
 ```{r, warning=FALSE, message=FALSE}
 # Compute cell/gene embeddings
 # By default, the first 10 dims of MCA space are used; can be adjusted by setting dims.use
-# By default, all genes from the single cell data is used; alternatively, we can use only the genes appearing in 
-# the gene sets; a sufficient number of genes should be retained (a few thousands) for the purpose of calculating
-# the background; can be adjusted by setting genes.use
+# By default, all genes from the single cell data is used; alternatively, we can use only the genes appearing in the gene sets; a sufficient number of genes should be retained (a few thousands) for the purpose of calculating the background; can be adjusted by setting genes.use
+# This may require more RAM (hundreds of Gbs) to run bigger datasets (several tens of thousands) because of the MCA calculation
+# Alternatively, averaging similar cells will shrink the size of the dataset. Can check https://github.com/qingnanl/SRAVG or similar tools
+
 ce <- compute.mca(object = pbmc3k)
 head(ce)
 
@@ -152,7 +153,7 @@ head(cv) # this gives a named numeric vector with the normalized label propagati
 # We can also do this for multiple gene sets
 # Again, using multi-threading is strongly recommended (mentioned above)
 cv.df <- run.rwr.list(el = el, gene_set_list = gene.set.list[gene.set.deviated], cells = cells)
-head(cv.df)
+cv.df[1:3, 1:3]
 
 
 ```
@@ -173,7 +174,7 @@ table(cl)
 # Again, using multi-threading is strongly recommended (mentioned above)
 
 cl.df <- compute.cell.label.df(cv.df)
-head(cl.df)
+cl.df[1:3, 1:3]
 
 ```
 
@@ -196,13 +197,23 @@ pbmc3k@meta.data$b_cell_activition_bin <- cl[colnames(pbmc3k)]
 p1 <- FeaturePlot(pbmc3k,
         features = "b_cell_activition",
         raster = T)
+p1
+
+```
+
+```{r, warning=FALSE, message=FALSE}
 p2 <- DimPlot(pbmc3k,
         group.by = "b_cell_activition_bin",
         raster = T)
+p2
+
+```
+
+```{r, warning=FALSE, message=FALSE}
 p3 <- DimPlot(pbmc3k,
         group.by = "seurat_annotations",
         raster = T)
-p1 + p2 +p3
+p3
 
 ```
 
@@ -248,13 +259,20 @@ p1 <- ggplot(meta,
                  color = seurat_annotations)) + 
   geom_point(shape=18)+
   theme_classic()
+
+p1
+
+
+```
+
+```{r, warning=FALSE, message=FALSE}
 p2 <- ggplot(meta, 
              aes(x=gene.set.avg.expr1, 
                  y=b_cell_activition, 
                  color = seurat_annotations)) + 
   geom_point(shape=18)+
   theme_classic()
-p1 + p2
+p2
 
 # we can see that the gsea score is highly correlated to the relative expression level of the gene set, but it is not practical to find a way to distinguish real B cells from others. With gsdensity, although some B cells do not show higher gene set expression than others, they can be distinguished using the gsdensity method
 
