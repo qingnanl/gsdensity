@@ -1,5 +1,7 @@
 
 #' 1. compute MCA embeddings
+#'
+
 #' @param object: a seurat object
 #' @param dims.use: which mca dimensions to use; default is the first 10 dimensions
 #' @param genes.use: which genes to use; default is all genes in the object
@@ -25,6 +27,7 @@ compute.mca <- function(object, dims.use = 1:10, genes.use = rownames(object)){
 
 #' 2. compute density of gene sets of interest
 #' 2.1 compute grid point coordinates
+
 #' @param coembed: the result from compute.mca
 #' @param genes.use: which genes to use; no default;
 #' can use genes based on the gene set selection or use rownames(object)
@@ -42,7 +45,8 @@ compute.grid.coords <- function(coembed, genes.use, n.grids = 100){
 }
 
 #' 2.2 compute KL-divergence
-#' some are adapted from https://github.com/alexisvdb/singleCellHaystack/
+#' (some are adapted from https://github.com/alexisvdb/singleCellHaystack/)
+
 #' @param coembed: the result from compute.mca
 #' @param genes.use: which genes to use; no default;
 #' can use genes based on the gene set selection or use rownames(object)
@@ -175,6 +179,8 @@ sample.kld <- function(density.df, ref, len.gene.set){
 
 #' 3. compute nearest neighbor graph for genes and cells
 #' This graph will be used for fetching the most relevant cells of a gene set
+#'
+
 #' @param coembed: the result from compute.mca
 #' @param nn.use: the number of nearest neighbors for building the graph; default 300
 #' @export
@@ -199,7 +205,7 @@ el_nn_search <- function(nn2_out){
 }
 
 #' 4. compute label propagation from gene set to cells
-#'
+
 #' this function is to form a 'seed matrix' used by the dRWR function (dnet R package);
 #' the seed matrix is specifying which nodes are the sources for label propagation
 seed.mat <- function(gene_set, graph.use){
@@ -226,6 +232,9 @@ seed.mat.list <- function(gene_set_list, graph.use){
 #' 4.1 To calculate the label propagation probability for a gene set among cells;
 #' result in a vector (length = number of cells) reflecting the probability
 #' each cell is labeled during the propagation (relevance to the gene set)
+#'
+#'
+
 #' @param el: edge list; output of 'compute.nn.edges'
 #' @param gene_set: a vector of genes of interest
 #' @param cells: name of cells; usually the same as 'colnames(object)'
@@ -252,6 +261,8 @@ run.rwr <- function(el, gene_set, cells){
 #' reflecting the probability each cell is labeled during the
 #' propagation (relevance to the gene set); same idea as run.rwr but with multiple
 #' gene sets
+#'
+
 #' @param el: edge list; output of 'compute.nn.edges'
 #' @param gene_set: a vector of genes of interest
 #' @param cells: name of cells; usually the same as 'colnames(object)'
@@ -280,6 +291,9 @@ run.rwr.list <- function(el, gene_set_list, cells){
 #' 4.2. binarize the label propagation probability in the cell population;
 #' result in a binarized vector of cells with 'nagative' and 'positive' labels;
 #' 'positive' means that the cells are relevant to the gene set
+#'
+#'
+
 #' @param cell_vec: output of 'run.rwr'
 #' @export
 #' @import multimode
@@ -353,7 +367,7 @@ compute.spec.single <- function(vec, positive, cell_df){
 #' This is to calculate the similarity between:
 #' 1. the label propagation probability of cells for gene sets and
 #' 2. the identify of cells in partitions
-#'
+
 #' @param metadata: a data frame with cell information (each row is a cell;
 #' usually object@meta.data)
 #' @param cell_group: cell partition vector (usually a column name
@@ -383,8 +397,11 @@ compute.spec <- function(cell_df, metadata, cell_group){
 
 #' 6. find gene sets with spatial relevance
 #'
+#'
 #' This function is to calculate how likely the cells relevant to a gene set is
 #' randomly distributed spatially
+#'
+
 #' @param spatial.coords: a data frame with each row as a cell and each column
 #' as a spatial coordinate (usually 2: x and y)
 #' @param weight_vec: output of run.rwr
@@ -418,6 +435,7 @@ compute.spatial.kld <- function(spatial.coords, weight_vec, n = 10){
 #' This function is to calculate how likely the cells relevant to
 #' multiple gene sets are randomly distributed spatially
 #'
+
 #' @param spatial.coords: a data frame with each row as a cell and each column
 #' as a spatial coordinate (usually 2: x and y)
 #' @param weight_df: output of run.rwr.list

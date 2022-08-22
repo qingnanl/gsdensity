@@ -1,0 +1,263 @@
+---
+title: "perform gene ontology analysis on scRNA-seq data"
+author: "Qingnan Liang"
+date: "8/21/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = T)
+```
+## Introduction
+
+Here is a demonstration of how to use the package 'gsdensity' to perform gene set analysis on single-cell RNA-seq data. Mostly, the analysis of scRNA-seq data is 'cell centric', which first identifies groups of cells which are somehow interesting, and then find out the specialty/function of them. However, in many cases, we do not have much anticipation of which cells we should go after, especially when the cell type/state annotation is yet unclear, and there is no systematic methods to nominate cells of interest (largely depends on the experiences of the researcher). Instead, experts in the very field may have in mind some pathways relevant to this sample ("Dr.XXX, could you please take a look at the XXX pathway in your data?"). 
+
+The motivation of this package is to allow for 'pathway centric' analysis of single-cell data. We try to answer two questions: 
+
+First, given a pathway (in the format of a set of genes) and a cell-by-gene matrix, can we tell if the gene set is relatively enriched by a subset cells or not (without any clustering/annotation of the cells)?
+
+Second, if a pathway is relatively enriched by some cells, can we fetch these cells?
+
+The following tutorial will give an example using the pbmc3k data and gene ontology (GO) biological process gene sets.
+
+## Load libraries
+
+```{r, warning=FALSE, message=FALSE}
+library(gsdensity)
+library(ggplot2) # for plotting
+library(reshape2)
+library(msigdbr) # for gathering gene sets
+library(Seurat)
+library(SeuratData)
+library(future) # for parallel computing
+library(future.apply) # for parallel computing
+
+```
+
+## Preparation: Collect gene sets
+
+##### Gene sets will be used as inputs of the analysis. The format of gene sets is 'list' in R.
+##### 1. We can create gene sets manually:
+
+```{r, warning=FALSE, message=FALSE}
+
+gene.set.manual <- list(gene.set.1 = c("gene_a", "gene_b", "gene_c"), 
+                        gene.set.2 = c("gene_d", "gene_e", "gene_f"), 
+                        gene.set.2 = c("gene_g", "gene_h", "gene_i"))
+gene.set.manual
+
+```
+##### 2. We can gather gene sets from public databases. Here I show examples using msigdbr which has common gene sets including GOs, Hallmark genes:
+
+```{r, warning=FALSE, message=FALSE}
+
+# collect a single category from the msigdbr database
+# https://cran.r-project.org/web/packages/msigdbr/vignettes/msigdbr-intro.html
+
+mdb_c5 <- msigdbr(species = "Homo sapiens", category = "C5")
+
+# just do biological process
+mdb_c5_bp <- mdb_c5[mdb_c5$gs_subcat == "GO:BP", ]
+
+# convert msigdbr gene sets to a list good for the input
+gene.set.list <- list()
+for (gene.set.name in unique(mdb_c5_bp$gs_name)){
+        gene.set.list[[gene.set.name]] <- mdb_c5_bp[mdb_c5_bp$gs_name %in% gene.set.name, ]$gene_symbol
+}
+str(gene.set.list[1:10])
+
+# for the purpose of getting a record, we can create and save a dataframe which has the name of gene sets and the members of it.
+genes <- sapply(gene.set.list, 
+       function(x)paste(x, collapse = ", "))
+gene.set.list.df <- data.frame(gene.set = names(gene.set.list), genes = genes)
+
+head(gene.set.list.df)
+# can be output for record
+# write.csv(gene.set.list.df, "gene.set.list.df.csv")
+```
+
+## Preparation: Single-cell datasets
+##### Here we use the pbmc3k data from SeuratData
+
+```{r, warning=FALSE, message=FALSE}
+data("pbmc3k")
+print(pbmc3k)
+# Normalize the data
+pbmc3k <- NormalizeData(pbmc3k)
+
+```
+
+## 1. Find out gene sets being relatively enriched by some cell populations
+
+
+```{r, warning=FALSE, message=FALSE}
+# Compute cell/gene embeddings
+# By default, the first 10 dims of MCA space are used; can be adjusted by setting dims.use
+# By default, all genes from the single cell data is used; alternatively, we can use only the genes appearing in 
+# the gene sets; a sufficient number of genes should be retained (a few thousands) for the purpose of calculating
+# the background; can be adjusted by setting genes.use
+ce <- compute.mca(object = pbmc3k)
+head(ce)
+
+# Compute the deviation of each gene list
+
+# It is strongly recommended to run this analysis with multi-threading, which speed up a lot
+# Set 20 workers with the following line
+# plan(multiprocess, workers = 20)
+
+# For demonstration purpose, we want to only focus on 'B Cell' related gene sets (B cells are known to be included in the pbmc data)
+
+gs.names <- grep("B_CELL", names(gene.set.list), value = T)
+gs.names # 35 gene sets
+
+# compute the deviation
+res <- compute.kld(coembed = ce, 
+                   genes.use = rownames(pbmc3k), 
+                   n.grids = 100, 
+                   gene.set.list = gene.set.list[gs.names],
+                   gene.set.cutoff = 3,
+                   n.times = 100)
+
+# To understand the output:
+# The column 'kld' (log-transformed KL-divergence) reflects the differential distribution between the gene set and the background (genes.use) in the MCA space; the column 'rkld.mean' reflects the averaged differential distribution between a random gene set (size matched) and the background, and the 'rkld.sd' is the standard deviation (we do select random gene sets n.times). p-value for each 'kld' is calculated based on the distribution described by 'rkld.mean' and 'rkld.sd'. Multi-testing adjustment for p-values are performed (fdr).
+
+head(res)
+
+# We can find out the deviated gene sets at alpha level equal to 0.05
+gene.set.deviated <- res[res$p.adj < 0.05, ]$gene.set
+gene.set.deviated
+
+# At this stage, we know that for all the B cell related GO terms, these 13 demonstrated some patterns/specificity in out dataset. We do not need to know anything about the dataset itself (e.g., clustering information). Now, we can start from whichever term to fetch cells the most relevant to it.
+
+```
+
+## 2. Fetch cells for gene set of interest
+
+```{r, warning=FALSE, message=FALSE}
+
+# First, compute a nearest neighbor graph (edge list) in the MCA space
+
+cells <- colnames(pbmc3k)
+el <- compute.nn.edges(coembed = ce, nn.use = 300)
+
+# Compute the relevance between each cell and the gene set (B_CELL_ACTIVATION)
+
+cv <- run.rwr(el = el, gene_set = gene.set.list[["GOBP_B_CELL_ACTIVATION"]], cells = cells)
+head(cv) # this gives a named numeric vector with the normalized label propagation probability, reflecting the relevance between the cell and the gene set
+```
+
+```{r, warning=FALSE, message=FALSE}
+# We can also do this for multiple gene sets
+# Again, using multi-threading is strongly recommended (mentioned above)
+cv.df <- run.rwr.list(el = el, gene_set_list = gene.set.list[gene.set.deviated], cells = cells)
+head(cv.df)
+
+
+```
+
+```{r, warning=FALSE, message=FALSE}
+# Now we have the relevance between each cell and the gene set
+# 'Fetching the cells for a gene set' is to binarize this relevance; we do this by fitting the label propagation probability to a bimodal distribution and find the antimode, and then use the antimode to binarize the data 
+
+cl <- compute.cell.label(cv)
+head(cl)
+table(cl)
+
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+# We can also do this for multiple gene sets
+# Again, using multi-threading is strongly recommended (mentioned above)
+
+cl.df <- compute.cell.label.df(cv.df)
+head(cl.df)
+
+```
+
+```{r, warning=FALSE, message=FALSE}
+# We can now visualize the data
+# Compute the UMAP coordinates for visualization
+pbmc3k <- pbmc3k %>%
+        FindVariableFeatures() %>%
+        ScaleData() %>%
+        RunPCA() %>%
+        FindNeighbors() %>%
+        RunUMAP(dims = 1:20)
+
+# add the label propagation probability and binarized label to meta data
+pbmc3k@meta.data$b_cell_activition <- cv[colnames(pbmc3k)]
+pbmc3k@meta.data$b_cell_activition_bin <- cl[colnames(pbmc3k)]
+
+# Plot (this pbmc3k data is pre-annotated and the 'seurat_annotations' comes with the SeuratData)
+# We can see that the most relevant cells of 'B cell activition' are B cells, which is expected.
+p1 <- FeaturePlot(pbmc3k,
+        features = "b_cell_activition",
+        raster = T)
+p2 <- DimPlot(pbmc3k,
+        group.by = "b_cell_activition_bin",
+        raster = T)
+p3 <- DimPlot(pbmc3k,
+        group.by = "seurat_annotations",
+        raster = T)
+p1 + p2 +p3
+
+```
+
+
+## 3. A brief example to compare gsdensity with GSEA
+
+
+```{r, warning=FALSE, message=FALSE}
+# We just use the 'B Cell activation' term
+# use the escape package to run gsea
+library(escape)
+ES.seurat <- enrichIt(obj = pbmc3k, 
+                      gene.sets = list(B_CELL_ACTIVATION = gene.set.list[["GOBP_B_CELL_ACTIVATION"]]), 
+                      groups = 1000, cores = 2)
+
+cvg <- ES.seurat$B_CELL_ACTIVATION
+names(cvg) <- rownames(ES.seurat)
+pbmc3k@meta.data$b_cell_activition_gsea <- cvg[colnames(pbmc3k)]
+
+FeaturePlot(pbmc3k,
+        c("b_cell_activition_gsea"),
+        raster = T)
+
+# we can see that the gsea score for this B cell related term can not really distinguish B cells from others 
+
+```
+
+```{r, warning=FALSE, message=FALSE}
+# We can look into the relationship between the gene set expression level and gsdensity/gsea 
+# use the "AddModuleScore" function to evaluate the relative expression level of a gene set
+
+# find common genes between the gene set and the scRNA-seq data
+genes.of.interest <- intersect(rownames(pbmc3k), gene.set.list[["GOBP_B_CELL_ACTIVATION"]])
+pbmc3k <- AddModuleScore(pbmc3k, 
+                          features = list(genes.of.interest), 
+                          ctrl = 20, 
+                          name = "gene.set.avg.expr")
+meta <- pbmc3k@meta.data
+
+p1 <- ggplot(meta, 
+             aes(x=gene.set.avg.expr1, 
+                 y=b_cell_activition_gsea, 
+                 color = seurat_annotations)) + 
+  geom_point(shape=18)+
+  theme_classic()
+p2 <- ggplot(meta, 
+             aes(x=gene.set.avg.expr1, 
+                 y=b_cell_activition, 
+                 color = seurat_annotations)) + 
+  geom_point(shape=18)+
+  theme_classic()
+p1 + p2
+
+# we can see that the gsea score is highly correlated to the relative expression level of the gene set, but it is not practical to find a way to distinguish real B cells from others. With gsdensity, although some B cells do not show higher gene set expression than others, they can be distinguished using the gsdensity method
+
+```
+
+
