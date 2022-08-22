@@ -3,7 +3,7 @@
 \name{compute.kld}
 \alias{compute.kld}
 \title{2.2 compute KL-divergence
-some are adapted from https://github.com/alexisvdb/singleCellHaystack/}
+(some are adapted from https://github.com/alexisvdb/singleCellHaystack/)}
 \usage{
 \method{compute}{kld}(
   coembed,
@@ -39,7 +39,7 @@ density distribution; This simulation will be done n.times; default is 100}
 }
 \description{
 2.2 compute KL-divergence
-some are adapted from https://github.com/alexisvdb/singleCellHaystack/
+(some are adapted from https://github.com/alexisvdb/singleCellHaystack/)
 }
 \examples{
 res <- compute.kld(coembed = ce,

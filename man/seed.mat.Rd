@@ -2,11 +2,14 @@
 % Please edit documentation in R/gsdensity_functions.R
 \name{seed.mat}
 \alias{seed.mat}
-\title{4. compute label propagation from gene set to cells}
+\title{4. compute label propagation from gene set to cells
+this function is to form a 'seed matrix' used by the dRWR function (dnet R package);
+the seed matrix is specifying which nodes are the sources for label propagation}
 \usage{
 seed.mat(gene_set, graph.use)
 }
 \description{
+4. compute label propagation from gene set to cells
 this function is to form a 'seed matrix' used by the dRWR function (dnet R package);
 the seed matrix is specifying which nodes are the sources for label propagation
 }
