@@ -38,7 +38,11 @@ remotes::install_github("https://github.com/qingnanl/gsdensity")
 
 ### Usage
 
-We included two examples showing how to use gsdensity with scRNA-seq data and spatial transcriptomics data. The latter one is mainly focused on how to associate gene sets with the spatial information of cells or other partition of cells.
+We included two examples showing how to use gsdensity with scRNA-seq data and spatial transcriptomics data. 
+
+In the former one we introduced the basic workflow and main functions of gsdensity, including a quick comparison between gsdensity and gsea.
+
+The latter one is mainly focused on how to associate gene sets with the spatial information of cells or other partition of cells.
 
 [Using gsdensity to analyze scRNA-seq data](http://htmlpreview.github.io/?https://github.com/qingnanl/gsdensity/blob/master/vignette/pbmc3k_example.html)
 
