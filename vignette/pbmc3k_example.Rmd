@@ -90,6 +90,7 @@ pbmc3k <- NormalizeData(pbmc3k)
 ```
 
 ## 1. Find out gene sets being relatively enriched by some cell populations
+
 ##### We achieve this by using multiple correspondence analysis (MCA) to co-embed genes and cells; thus the gene coordinates in the space are affected by their relationship to cells. Basically we are trying to find out if the distribution of a gene set is very different from the background (all genes), and if so, it indicates that the gene set is displaying affinity towards some cells. 
 
 
@@ -138,6 +139,9 @@ gene.set.deviated
 
 ## 2. Fetch cells for gene set of interest
 
+
+##### Knowing that some gene sets are enriched is good, but not enough. We are interested in which cells are the most relevant to the gene sets. 
+
 ```{r, warning=FALSE, message=FALSE}
 
 # First, compute a nearest neighbor graph (edge list) in the MCA space
@@ -177,6 +181,8 @@ table(cl)
 
 cl.df <- compute.cell.label.df(cv.df)
 cl.df[1:3, 1:3]
+
+# with the binarized data, we can have an optional filtering step to further limit our gene terms with certain numbers of "positive cells". Sometimes a gene set only have a very small number of positive cells and we should be cautious on that. This step is included in the vignette 'spatial_example_10x_visium'.
 
 ```
 

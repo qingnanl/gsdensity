@@ -1,0 +1,277 @@
+---
+title: "spatial_example_10x_visium"
+author: "Qingnan Liang"
+date: "8/22/2022"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+# opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = T)
+```
+## Introduction
+
+Here is a demonstration of how to use the package 'gsdensity' to perform gene set analysis on single-cell data when we want to investigate the relationship between the pathway and other information of the cells, such as clustering information and spatial information.
+
+## Load libraries
+
+```{r, warning=FALSE, message=FALSE}
+library(gsdensity)
+library(ggplot2) # for plotting
+library(ggrepel)
+library(reshape2)
+library(msigdbr) # for gathering gene sets
+library(Seurat)
+library(SeuratData)
+library(future) # for parallel computing
+library(future.apply) # for parallel computing
+
+```
+
+## Preparation: Collect gene sets
+
+##### This is the same as is shown in 'pbmc3k_example'. Here we use gene ontology (GO) biological process gene sets.
+
+```{r, warning=FALSE, message=FALSE}
+
+# Collect a single category from the msigdbr database
+# For more information please check: https://cran.r-project.org/web/packages/msigdbr/vignettes/msigdbr-intro.html
+
+# Use mouse gene sets
+mdb_c5 <- msigdbr(species = "Mus musculus", category = "C5")
+
+# If we just want to do biological process:
+mdb_c5_bp <- mdb_c5[mdb_c5$gs_subcat == "GO:BP", ]
+
+# convert msigdbr gene sets to a list good for the input
+gene.set.list <- list()
+for (gene.set.name in unique(mdb_c5_bp$gs_name)){
+        gene.set.list[[gene.set.name]] <- mdb_c5_bp[mdb_c5_bp$gs_name %in% gene.set.name, ]$gene_symbol
+}
+# head(gene.set.list)
+
+```
+
+
+## Preparation: Single-cell datasets
+
+##### Here we use the stxBrain data from SeuratData;
+##### We first do the preprocessing following this tutorial https://satijalab.org/seurat/articles/spatial_vignette.html
+
+```{r, warning=FALSE, message=FALSE}
+brain <- LoadData("stxBrain", type = "anterior1")
+print(brain)
+
+# Transformation
+
+brain <- SCTransform(brain, assay = "Spatial", verbose = FALSE)
+
+```
+
+```{r, warning=FALSE, message=FALSE}
+# Dimensionality reduction, clustering, and visualization
+
+brain <- RunPCA(brain, assay = "SCT", verbose = FALSE)
+brain <- FindNeighbors(brain, reduction = "pca", dims = 1:30)
+brain <- FindClusters(brain, verbose = FALSE)
+brain <- RunUMAP(brain, reduction = "pca", dims = 1:30)
+
+# plot the clustering information
+DimPlot(brain, reduction = "umap", label = TRUE)
+
+```
+
+```{r, warning=FALSE, message=FALSE}
+
+# map the clusters back onto the spatial map
+SpatialDimPlot(brain, label = TRUE, label.size = 3)
+
+```
+
+
+## 1. Find out spatially related gene sets
+
+##### gsdensity starts with gene sets. We first need to calculate the relevance between each cell and the gene sets. Then we use weighted two dimensional kernel density estimation (weighted kde2d) to investigate if the relevant cells show some spatial patterns.
+
+
+```{r, warning=FALSE, message=FALSE}
+# Run the gsdensity pipeline; very similar to what is shown in 'pbmc3k_example'
+
+# compute the cell and gene embeddings; we will still refer to each data point as a 'cell' although it is actually mixtures of cells in 10x visium.
+
+ce <- compute.mca(object = brain)
+
+# compute the deviation; we want to use only the gene sets with more than 20 genes
+res <- compute.kld(coembed = ce, 
+                   genes.use = rownames(brain), 
+                   n.grids = 100, 
+                   gene.set.list = gene.set.list,
+                   gene.set.cutoff = 20,
+                   n.times = 100)
+
+# we will then focus on th deviated gene sets; here we set a more stringent alpha level cutoff
+gene.set.deviated <- res[res$p.adj < 0.001, ]$gene.set
+# length(gene.set.deviated)
+
+# compute a nearest neighbor graph (edge list) in the MCA space
+cells <- colnames(brain)
+el <- compute.nn.edges(coembed = ce, nn.use = 300)
+
+# We then compute the relevance between each cell and the deviated gene sets
+
+cv.df <- run.rwr.list(el = el, gene_set_list = gene.set.list[gene.set.deviated], cells = cells)
+cv.df[1:3, 1:3]
+
+# We can then binarize the data for each gene get
+
+cl.df <- compute.cell.label.df(cv.df)
+
+
+# An optional filtering step: we want to only keep the terms with certain numbers of positive cells; here we use 100
+
+positive.count <- apply(cl.df, MARGIN = 2, FUN = function(x) {length(x[x == "positive"])})
+gene.set.deviated.2 <- names(positive.count[positive.count > 100])
+
+```
+
+```{r, warning=FALSE, message=FALSE}
+
+# first we need to find the spatial information of the cells
+# this coords.df should be a cell by coordinate matrix/dataframe with cells in rows and coordinates in columns
+# in this dataset, this information can be found as below:
+coords.df <- brain@images$anterior1@coordinates[, c("imagerow", "imagecol")]
+head(coords.df)
+
+# compute the spatial relevance of gene sets
+
+# the 'weight_df' should have a format as the output of 'run.rwr.list'; here we use the terms with at least 100 positive cells
+# the parameter 'n' defines how to split the spatial map. n = 10 means that 10 splits are made in each dimension (total 100 grids) for the kde process
+
+spatial.klds <- compute.spatial.kld.df(spatial.coords = coords.df, 
+                                       weight_df = cv.df[, gene.set.deviated.2], 
+                                       n = 10)
+
+# Then we want to nominate gene sets: here we want to find highly spatially related gene sets
+
+top.spatial.terms <- spatial.klds[spatial.klds > quantile(spatial.klds, 0.99)]
+top.spatial.terms
+
+```
+
+```{r, warning=FALSE, message=FALSE}
+# visualize some of the terms
+
+# add the label propagation probability to metadata
+brain@meta.data$GOBP_POSITIVE_REGULATION_OF_LAMELLIPODIUM_ASSEMBLY <- cv.df[rownames(brain@meta.data), 
+                                                           "GOBP_POSITIVE_REGULATION_OF_LAMELLIPODIUM_ASSEMBLY"]
+
+SpatialFeaturePlot(brain, features = c("GOBP_POSITIVE_REGULATION_OF_LAMELLIPODIUM_ASSEMBLY")) + 
+        theme(legend.position = "top")
+
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+
+brain@meta.data$GOBP_NON_MOTILE_CILIUM_ASSEMBLY <- cv.df[rownames(brain@meta.data), 
+                                                           "GOBP_NON_MOTILE_CILIUM_ASSEMBLY"]
+
+SpatialFeaturePlot(brain, features = c("GOBP_NON_MOTILE_CILIUM_ASSEMBLY")) + 
+        theme(legend.position = "top")
+
+
+```
+
+
+
+```{r, warning=FALSE, message=FALSE}
+
+brain@meta.data$GOBP_REGULATION_OF_AMYLOID_PRECURSOR_PROTEIN_CATABOLIC_PROCESS <- cv.df[rownames(brain@meta.data), 
+                                                           "GOBP_REGULATION_OF_AMYLOID_PRECURSOR_PROTEIN_CATABOLIC_PROCESS"]
+
+SpatialFeaturePlot(brain, features = c("GOBP_REGULATION_OF_AMYLOID_PRECURSOR_PROTEIN_CATABOLIC_PROCESS")) + 
+        theme(legend.position = "top")
+
+
+```
+
+
+
+## 2. Find out cell partition related gene sets
+
+##### gsdensity is a cluster-free approach that does not really require any information of cells. However, when partition information is available for cells, gsdensity can also add onto it. The most common partition of cells is clustering, while others such as 'disease or healthy', 'treatment or control' are possible. Here we just use clustering as an example and find out which gene terms are highly specific for a cluster.
+
+
+```{r, warning=FALSE, message=FALSE}
+
+# Basically we are computing the Jensen-Shannon distance between the label propagation probability (for each gene set) and the cell identity (does or does not belong to the partition/cluster)
+jsd.df <- compute.spec(cell_df = cv.df[, gene.set.deviated.2], 
+                       metadata = brain@meta.data, # each row is a cell; columns include partition information
+                       cell_group = "seurat_clusters" # 'cell_group' should use a column name in the metadata as the input
+                       )
+head(jsd.df) # now each column is the specificity for the gene sets to the very cluster
+
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+
+
+# Use cluster 1 as an example
+
+colnames(jsd.df) <- paste0("cluster_", colnames(jsd.df))
+coi <- "cluster_1" # cluster of interest
+
+# create data frames for visualization
+coi.df <- data.frame(specificity = jsd.df[, coi], 
+                     term = rownames(jsd.df))
+
+# order the gene sets by specificity
+coi.df <- coi.df[order(coi.df$specificity),]
+
+# highlight the top 5% gene sets
+highlighted <- coi.df[coi.df$specificity > quantile(coi.df$specificity, 0.95), ]
+
+ggplot(coi.df, aes(x=seq(specificity), y=specificity)) + 
+  geom_point(color = ifelse(coi.df$term %in% highlighted$term, "red", "black")) + 
+  geom_text_repel(aes(label = ifelse(term %in% highlighted$term, term, "")), 
+                  size = 2) + 
+  xlab("Index") + 
+  ylab("Specificity") + 
+  theme_classic()
+
+```
+
+```{r, warning=FALSE, message=FALSE}
+# We can then visualize the gene set on the spatial map
+# highlight the cluster 1 in the spatial map
+SpatialDimPlot(brain, 
+               cells.highlight = CellsByIdentities(object = brain, idents = c(1)), 
+               facet.highlight = TRUE)
+
+```
+
+```{r, warning=FALSE, message=FALSE}
+
+# add the label propagation probability to metadata for cluster_1 specific terms
+brain@meta.data$GOBP_MEMBRANE_INVAGINATION <- cv.df[rownames(brain@meta.data), 
+                                                           "GOBP_MEMBRANE_INVAGINATION"]
+
+SpatialFeaturePlot(brain, features = c("GOBP_MEMBRANE_INVAGINATION")) + 
+        theme(legend.position = "top")
+
+
+```
+```{r, warning=FALSE, message=FALSE}
+
+# add the label propagation probability to metadata for cluster_1 specific terms
+brain@meta.data$GOBP_CELLULAR_AMINO_ACID_CATABOLIC_PROCESS <- cv.df[rownames(brain@meta.data), 
+                                                           "GOBP_CELLULAR_AMINO_ACID_CATABOLIC_PROCESS"]
+
+SpatialFeaturePlot(brain, features = c("GOBP_CELLULAR_AMINO_ACID_CATABOLIC_PROCESS")) + 
+        theme(legend.position = "top")
+
+
+```
