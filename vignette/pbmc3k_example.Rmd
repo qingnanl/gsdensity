@@ -2,13 +2,15 @@
 title: "perform gene ontology analysis on scRNA-seq data"
 author: "Qingnan Liang"
 date: "8/21/2022"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(knitr)
-# opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = T)
+opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = T)
 ```
 ## Introduction
 
