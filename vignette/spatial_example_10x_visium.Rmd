@@ -2,7 +2,9 @@
 title: "spatial_example_10x_visium"
 author: "Qingnan Liang"
 date: "8/22/2022"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 
