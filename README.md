@@ -135,8 +135,7 @@ DimPlot(pbmc3k,
 
 ### Updates
 
-#### 1
-When such error appears when running run.rwr():
+1. (9/15/22)When such error appears when running run.rwr():
 ```
 Error: as(<dsCMatrix>, “dgCMatrix”) is deprecated since Matrix 1.5-0; do as(., “generalMatrix”) instead
 ```
