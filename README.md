@@ -133,4 +133,15 @@ DimPlot(pbmc3k,
 ![image](https://user-images.githubusercontent.com/53788946/186203804-ad29d828-3980-4b00-afe3-2cc6cddf7779.png)
 
 
+### Updates
 
+#### 1
+When such error appears when running run.rwr():
+```
+Error: as(<dsCMatrix>, “dgCMatrix”) is deprecated since Matrix 1.5-0; do as(., “generalMatrix”) instead
+```
+please set:
+```
+igraph::igraph.options(sparsematrices = FALSE)
+```
+then run the code again
