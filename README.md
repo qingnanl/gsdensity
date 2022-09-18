@@ -23,7 +23,7 @@ The core idea of gsdensity is that we use multiple correspondence analsysis (MCA
 
 Have been tested for windows and linux systems with no problem. Running on a linux server (with parallel computing) is strongly recommended when there are many gene sets to be tested. 
 
-Installation not successful in macos with M1 chip, due to a dependency of the CelliD package (https://github.com/LTLA/scuttle/issues/14#issuecomment-989653173). Will keep testing and update when this is solved.
+Installation not successful in macos with M1 chip, due to a dependency of the CelliD package (https://github.com/LTLA/scuttle/issues/14#issuecomment-989653173). Will keep testing and update when this is solved. (9/17: please check Update section #2)
 
 ```
 # First, install dependencies: Seurat, CelliD, dnet, supraHex, Rgraphviz, infotheo, anticlust, multimode, philentropy; then:
