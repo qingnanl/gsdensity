@@ -26,6 +26,8 @@ Have been tested for windows and linux systems with no problem. Running on a lin
 Installation not successful in macos with M1 chip, due to a dependency of the CelliD package (https://github.com/LTLA/scuttle/issues/14#issuecomment-989653173). Will keep testing and update when this is solved.
 
 ```
+# First, install dependencies: Seurat, CelliD, dnet, supraHex, Rgraphviz, infotheo, anticlust, multimode, philentropy; then:
+
 # install.packages("remotes")
 
 #Turn off warning-error-conversion, because the tiniest warning stops installation
@@ -144,3 +146,5 @@ please set:
 igraph::igraph.options(sparsematrices = FALSE)
 ```
 then run the code again
+
+2. (9/17/22) For MacOS with M1 chip, the tool can be installed with the intel build R, but not for the arm64 version of R. This has been tested with an M1-2020 computer.
