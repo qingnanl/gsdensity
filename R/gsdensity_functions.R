@@ -408,6 +408,10 @@ compute.spec <- function(cell_df, metadata, cell_group){
 #' @param n: split the spatial map for local density estimation;
 #' n is the number of split for each dimension; for n = 10, the spatial map is
 #' split to n * n = 100 grids for the density estimation
+#' @param n.times: the weight_vec is shuffled several times (n.times) to generate
+#' a background distribution (shuffled weights vs. equal weights) for statistical
+#' significance estimation (p.value); larger n.times will be more time-consuming and
+#' more accurate
 #' @export
 #' @import MASS
 #' @examples
@@ -416,7 +420,7 @@ compute.spec <- function(cell_df, metadata, cell_group){
 #'                                        weight_vec = cell.prob.df[, 1],
 #'                                        n = 10)
 #'
-compute.spatial.kld <- function(spatial.coords, weight_vec, n = 10){
+compute.spatial.kld <- function(spatial.coords, weight_vec, n = 10, n.times = 20){
   bg.weight <- rep(1/nrow(spatial.coords), nrow(spatial.coords))
   bg.dens <- kde2d.weighted(x = spatial.coords[, 1],
                             y = spatial.coords[, 2],
@@ -429,7 +433,16 @@ compute.spatial.kld <- function(spatial.coords, weight_vec, n = 10){
                          n = n)
   P <- c(dens$z)
   spatial.kld <- sum(P * log(P/Q))
-  return(spatial.kld)
+  rspatial.kld <- sapply(1:n.times, function(x)sample.spatial.kld(weight_vec = weight_vec,
+                                                                  ref = Q,
+                                                                  n = n,
+                                                                  spatial.coords = spatial.coords))
+  rspatial.kld.avg <- mean(log(rspatial.kld))
+  rspatial.kld.sd <- sd(log(rspatial.kld))
+  pvalue <- pnorm(log(spatial.kld), rspatial.kld.avg, rspatial.kld.sd, lower.tail = FALSE)
+  spatial.kld.vec <- c(log(spatial.kld), rspatial.kld.avg, rspatial.kld.sd, pvalue)
+  names(spatial.kld.vec) <- c("spatial.kld", "rspatial.kld", "rspatial.kld.sd", "p.value")
+  return(spatial.kld.vec)
 }
 
 #' This function is to calculate how likely the cells relevant to
@@ -442,22 +455,40 @@ compute.spatial.kld <- function(spatial.coords, weight_vec, n = 10){
 #' @param n: split the spatial map for local density estimation;
 #' n is the number of split for each dimension; for n = 10, the spatial map is
 #' split to n * n = 100 grids for the density estimation
+#' @param n.times: the same as n.times in function 'compute.spatial.kld'
 #' @export
 #' @examples
 #' coords.df <- slide.seq@images$image@coordinates
 #' spatial.klds <- compute.spatial.kld.df(spatial.coords = coords.df,
 #'                                        weight_df = cell.prob.df,
-#'                                        n = 10)
+#'                                        n = 10, n.times = 20)
 #'
-compute.spatial.kld.df <- function(spatial.coords, weight_df, n = 10){
+compute.spatial.kld.df <- function(spatial.coords, weight_df, n = 10, n.times = 20){
   weight_df <- weight_df[rownames(spatial.coords), ] # make sure the order is the same
   klds <- future_apply(weight_df,
-                       MARGIN = 2,
+                       MARGIN = 2, future.seed=TRUE,
                        function(x) {compute.spatial.kld(spatial.coords = spatial.coords,
                                                         weight_vec = x,
-                                                        n = n)})
-  names(klds) <- colnames(weight_df)
-  return(klds)
+                                                        n = n, n.times = n.times)})
+  klds.df <- as.data.frame(t(klds))
+  #klds.df <- do.call(rbind, klds)
+  #rownames(klds.df) <- colnames(weight_df)
+  klds.df$p.adj <- p.adjust(p = klds.df$p.value, method = "fdr")
+  return(klds.df)
+}
+
+#' this function is called by 'compute.spatial.kld' to calculate the kl-divergence between
+#' cell-weighted with shuffled weight vector and the ref (all cells, unweighted)
+#'
+sample.spatial.kld <- function(weight_vec, spatial.coords, n, ref){
+  rweight_vec <- sample(weight_vec)
+  rdens <- kde2d.weighted(x = spatial.coords[, 1],
+                          y = spatial.coords[, 2],
+                          w = rweight_vec,
+                          n = n)
+  rP <- c(rdens$z)
+  rspatial.kld <- sum(rP * log(rP/ref))
+  return(rspatial.kld)
 }
 
 #' based on https://stat.ethz.ch/pipermail/r-help/2006-June/107405.html
