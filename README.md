@@ -148,3 +148,5 @@ igraph::igraph.options(sparsematrices = FALSE)
 then run the code again
 
 2. (9/17/22) For MacOS with M1 chip, the tool can be installed with the intel build R, but not for the arm64 version of R. This has been tested with an M1-2020 computer.
+
+3. (9/25/22) Now we provide statistical test for spatial relevance of gene sets with 'compute.spatial.kld' and 'compute.spatial.kld.df' functions.
