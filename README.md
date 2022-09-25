@@ -81,7 +81,7 @@ pbmc3k <- NormalizeData(pbmc3k)
 ce <- compute.mca(object = pbmc3k)
 # find gene sets with differential density 
 res <- compute.kld(coembed = ce, 
-                   genes.use = rownames(pbmc3k), 
+                   genes.use = intersect(rownames(ce), rownames(pbmc3k)), # this intersection is to select only genes, not cells. 
                    n.grids = 100, 
                    gene.set.list = gene.set.list,
                    gene.set.cutoff = 3,
