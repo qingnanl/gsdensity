@@ -246,11 +246,11 @@ seed.mat.list <- function(gene_set_list, graph.use){
 #' gi <- "GOBP_TAXIS"
 #' cv <- run.rwr(el = el, gene_set = gene.set.list[[gi]], cells = cells)
 
-run.rwr <- function(el, gene_set, cells){
+run.rwr <- function(el, gene_set, cells, restart = 0.75){
   g <- graph_from_edgelist(as.matrix(el), directed = F)
   g <- simplify(g)
   ss <- seed.mat(gene_set = gene_set, graph.use = g)
-  rwr <- dRWR(g, setSeeds = ss, parallel = F, verbose = F)
+  rwr <- dRWR(g, setSeeds = ss, parallel = F, verbose = F, restart = restart)
   rownames(rwr) <- rownames(ss)
   cell_vec <- rwr[cells, 1]
   cell_vec <- cell_vec / sum(cell_vec)
@@ -271,11 +271,11 @@ run.rwr <- function(el, gene_set, cells){
 #' rs <- sample(length(gene.set.list), 10, replace = F)
 #' cv.df <- run.rwr.list(el = el, gene_set_list = gene.set.list[rs], cells = cells)
 
-run.rwr.list <- function(el, gene_set_list, cells){
+run.rwr.list <- function(el, gene_set_list, cells, restart = 0.75){
   g <- graph_from_edgelist(as.matrix(el), directed = F)
   g <- simplify(g)
   ss <- seed.mat.list(gene_set_list = gene_set_list, graph.use = g)
-  rwrl <- dRWR(g, setSeeds = ss, parallel = T, verbose = F)
+  rwrl <- dRWR(g, setSeeds = ss, parallel = T, verbose = F, restart = restart)
   rownames(rwrl) <- rownames(ss)
   cell_rwr <- rwrl[cells, ]
   colnames(cell_rwr) <- colnames(ss)
