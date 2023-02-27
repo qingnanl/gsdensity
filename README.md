@@ -150,3 +150,5 @@ then run the code again
 2. (9/17/22) For MacOS with M1 chip, the tool can be installed with the intel build R, but not for the arm64 version of R. This has been tested with an M1-2020 computer.
 
 3. (9/25/22) Now we provide statistical test for spatial relevance of gene sets with 'compute.spatial.kld' and 'compute.spatial.kld.df' functions.
+
+4. (2/27/22) Now we added a tunable parameter, "restart", for network propagation. In most cases, using the default (0.75) will give reasonable results. When the gene list is very small or many genes from the list are undetected, and the user still want to find the relatively most relevant cells, please consider setting a lower "restart", e.g., 0.5. This will let the propagation go farther.
