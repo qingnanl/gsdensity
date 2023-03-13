@@ -1,6 +1,5 @@
 exportPattern("^[[:alpha:]]+")
 import(Seurat)
-import(SeuratData)
 import(dplyr)
 import(Matrix)
 import(CelliD)

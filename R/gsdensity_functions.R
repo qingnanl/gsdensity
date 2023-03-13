@@ -65,16 +65,6 @@ compute.grid.coords <- function(coembed, genes.use, n.grids = 100){
 #' @return kl-divergence between given gene set and random gene sets
 #' @export
 #' @import
-#' @examples
-#' library(SeuratData)
-#' library(Seurat)
-#' data('pbmc3k')
-#' res <- compute.kld(coembed = ce,
-#'                    genes.use = intersect(rownames(ce), rownames(pbmc3k)),
-#'                    n.grids = 100,
-#'                    gene.set.list = gene.set.list[1:5],
-#'                    gene.set.cutoff = 3,
-#'                    n.times = 100)
 #'
 #'
 compute.kld <- function(coembed, genes.use,
