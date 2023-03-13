@@ -8,6 +8,12 @@ to 1.}
 \usage{
 \method{compute}{db}(density.df)
 }
+\arguments{
+\item{density.df}{an intermediate object in 'compute.kld'}
+}
+\value{
+distribution
+}
 \description{
 this function is called by 'compute.kld' to aggregate the density contribution
 of each gene to each grid point, and then normalize the densities of grid points

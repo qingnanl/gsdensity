@@ -15,37 +15,43 @@
 )
 }
 \arguments{
-\item{coembed:}{the result from compute.mca}
+\item{coembed}{the result from compute.mca}
 
-\item{genes.use:}{which genes to use; no default;
+\item{genes.use}{which genes to use; no default;
 can use genes based on the gene set selection or use rownames(object)}
 
-\item{n.grids:}{number of grid points used for gene set density estimation;
+\item{n.grids}{number of grid points used for gene set density estimation;
 larger number is more accurate and slower;
 default is 100 (recommended to test 100 first)
 'coembed', 'genes.use', 'n.grids' are passed to 'compute.grid.coords()'}
 
-\item{gene.set.list:}{a list of gene sets;
+\item{gene.set.list}{a list of gene sets;
 e.g., gene.set.list <- list(gene.set.a = c("A", "B", "C"),
                             gene.set.b = c("a", "b", "c"))}
 
-\item{gene.set.cutoff:}{gene sets with length less than this cutoff will
+\item{gene.set.cutoff}{gene sets with length less than this cutoff will
 not be used; the length is after the intersection of the gene set and
 genes.use}
 
-\item{n.times:}{to evaluate how likely the gene set density is not caused
+\item{n.times}{to evaluate how likely the gene set density is not caused
 by randomness, size-matched gene sets will be used to compute the background
 density distribution; This simulation will be done n.times; default is 100}
+}
+\value{
+kl-divergence between given gene set and random gene sets
 }
 \description{
 2.2 compute KL-divergence
 (some are adapted from https://github.com/alexisvdb/singleCellHaystack/)
 }
 \examples{
+library(SeuratData)
+library(Seurat)
+data('pbmc3k')
 res <- compute.kld(coembed = ce,
-                   genes.use = rownames(pbmc3k),
+                   genes.use = intersect(rownames(ce), rownames(pbmc3k)),
                    n.grids = 100,
-                   gene.set.list = gene.set.list,
+                   gene.set.list = gene.set.list[1:5],
                    gene.set.cutoff = 3,
                    n.times = 100)
 

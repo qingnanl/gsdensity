@@ -9,6 +9,14 @@ genes to grid points}
 \usage{
 vectorized_pdist(A, B)
 }
+\arguments{
+\item{A}{matrix}
+
+\item{B}{matrix}
+}
+\value{
+returns pairwise-distances
+}
 \description{
 from an excellent post: https://www.r-bloggers.com/2013/05/pairwise-distances-in-r/
 enhanced the speed

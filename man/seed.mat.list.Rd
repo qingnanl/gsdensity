@@ -7,6 +7,14 @@ are multiple gene sets of interest)}
 \usage{
 seed.mat.list(gene_set_list, graph.use)
 }
+\arguments{
+\item{gene_set_list}{gene_set_list}
+
+\item{graph.use}{graph.use}
+}
+\value{
+returns seed matrix
+}
 \description{
 this function is used when more than one 'seed sets' will be used (when there
 are multiple gene sets of interest)

@@ -8,6 +8,14 @@ the seed matrix is specifying which nodes are the sources for label propagation}
 \usage{
 seed.mat(gene_set, graph.use)
 }
+\arguments{
+\item{gene_set}{gene_set}
+
+\item{graph.use}{graph.use}
+}
+\value{
+returns seed matrix
+}
 \description{
 4. compute label propagation from gene set to cells
 this function is to form a 'seed matrix' used by the dRWR function (dnet R package);

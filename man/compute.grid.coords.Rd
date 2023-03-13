@@ -8,14 +8,17 @@
 \method{compute}{grid.coords}(coembed, genes.use, n.grids = 100)
 }
 \arguments{
-\item{coembed:}{the result from compute.mca}
+\item{coembed}{the result from compute.mca}
 
-\item{genes.use:}{which genes to use; no default;
+\item{genes.use}{which genes to use; no default;
 can use genes based on the gene set selection or use rownames(object)}
 
-\item{n.grids:}{number of grid points used for gene set density estimation;
+\item{n.grids}{number of grid points used for gene set density estimation;
 larger number is more accurate and slower;
 default is 100 (recommended to test 100 first)}
+}
+\value{
+grid coordinates
 }
 \description{
 2. compute density of gene sets of interest

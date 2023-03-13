@@ -7,28 +7,24 @@
 \method{compute}{spatial.kld}(spatial.coords, weight_vec, n = 10, n.times = 20)
 }
 \arguments{
-\item{spatial.coords:}{a data frame with each row as a cell and each column
+\item{spatial.coords}{a data frame with each row as a cell and each column
 as a spatial coordinate (usually 2: x and y)}
 
-\item{weight_vec:}{output of run.rwr}
+\item{weight_vec}{output of run.rwr}
 
-\item{n:}{split the spatial map for local density estimation;
+\item{n}{split the spatial map for local density estimation;
 n is the number of split for each dimension; for n = 10, the spatial map is
 split to n * n = 100 grids for the density estimation}
 
-\item{n.times:}{the weight_vec is shuffled several times (n.times) to generate
+\item{n.times}{the weight_vec is shuffled several times (n.times) to generate
 a background distribution (shuffled weights vs. equal weights) for statistical
 significance estimation (p.value); larger n.times will be more time-consuming and
 more accurate}
 }
+\value{
+spatial kl-divergence
+}
 \description{
 This function is to calculate how likely the cells relevant to a gene set is
 randomly distributed spatially
-}
-\examples{
-coords.df <- slide.seq@images$image@coordinates
-spatial.klds <- compute.spatial.kld(spatial.coords = coords.df,
-                                       weight_vec = cell.prob.df[, 1],
-                                       n = 10)
-
 }

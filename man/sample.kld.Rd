@@ -7,6 +7,16 @@ sampled (background) gene set and the ref (all) gene set}
 \usage{
 sample.kld(density.df, ref, len.gene.set)
 }
+\arguments{
+\item{density.df}{density.df}
+
+\item{ref}{ref}
+
+\item{len.gene.set}{len.gene.set}
+}
+\value{
+returns random klds
+}
 \description{
 this function is called by 'compute.kld' to calculate the kl-divergence between
 sampled (background) gene set and the ref (all) gene set

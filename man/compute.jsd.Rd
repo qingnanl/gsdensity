@@ -8,6 +8,14 @@ inspired by https://github.com/FloWuenne/scFunctions/blob/0d9ea609fa72210a151f72
 \usage{
 \method{compute}{jsd}(x, y)
 }
+\arguments{
+\item{x}{x}
+
+\item{y}{y}
+}
+\value{
+returns jsd_distance
+}
 \description{
 this function is called by compute.spec.single to calculate the similarity
 between two vectors

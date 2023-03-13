@@ -107,7 +107,7 @@ ce <- compute.mca(object = brain)
 
 # compute the deviation; we want to use only the gene sets with more than 20 genes
 res <- compute.kld(coembed = ce, 
-                   genes.use = rownames(brain), 
+                   genes.use = intersect(rownames(ce), rownames(brain)), 
                    n.grids = 100, 
                    gene.set.list = gene.set.list,
                    gene.set.cutoff = 20,

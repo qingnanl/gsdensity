@@ -8,6 +8,22 @@ in 2d space with each data point weighted.}
 \usage{
 kde2d.weighted(x, y, w, h, n, lims = c(range(x), range(y)))
 }
+\arguments{
+\item{x}{x}
+
+\item{y}{y}
+
+\item{w}{w}
+
+\item{h}{h}
+
+\item{n}{n}
+
+\item{lims}{lims}
+}
+\value{
+weighted kde2d estimation
+}
 \description{
 based on https://stat.ethz.ch/pipermail/r-help/2006-June/107405.html
 this is called by compute.spatial.kld to calculate the kernel density estimation

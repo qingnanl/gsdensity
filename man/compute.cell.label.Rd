@@ -9,15 +9,13 @@ result in a binarized vector of cells with 'nagative' and 'positive' labels;
 \method{compute}{cell.label}(cell_vec)
 }
 \arguments{
-\item{cell_vec:}{output of 'run.rwr'}
+\item{cell_vec}{output of 'run.rwr'}
+}
+\value{
+cell label of 'negative' or 'positive' for a given pathway
 }
 \description{
 4.2. binarize the label propagation probability in the cell population;
 result in a binarized vector of cells with 'nagative' and 'positive' labels;
 'positive' means that the cells are relevant to the gene set
-}
-\examples{
-cv <- run.rwr(el = el, gene_set = gene.set.list[[gi]], cells = cells)
-compute.cell.label(cv)
-
 }

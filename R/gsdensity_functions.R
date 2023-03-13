@@ -2,14 +2,12 @@
 #' 1. compute MCA embeddings
 #'
 
-#' @param object: a seurat object
-#' @param dims.use: which mca dimensions to use; default is the first 10 dimensions
-#' @param genes.use: which genes to use; default is all genes in the object
+#' @param object a seurat object
+#' @param dims.use which mca dimensions to use; default is the first 10 dimensions
+#' @param genes.use which genes to use; default is all genes in the object
 #' @return returns a dataframe with cells as rows and mca coordinates as columns
 #' @export
 #' @import Seurat dplyr Matrix CelliD
-#' @exampless
-#' ce <- compute.mca(pbmc3k)
 #'
 #'
 compute.mca <- function(object, dims.use = 1:10, genes.use = rownames(object)){
@@ -28,12 +26,13 @@ compute.mca <- function(object, dims.use = 1:10, genes.use = rownames(object)){
 #' 2. compute density of gene sets of interest
 #' 2.1 compute grid point coordinates
 
-#' @param coembed: the result from compute.mca
-#' @param genes.use: which genes to use; no default;
+#' @param coembed the result from compute.mca
+#' @param genes.use which genes to use; no default;
 #' can use genes based on the gene set selection or use rownames(object)
-#' @param n.grids: number of grid points used for gene set density estimation;
+#' @param n.grids number of grid points used for gene set density estimation;
 #' larger number is more accurate and slower;
 #' default is 100 (recommended to test 100 first)
+#' @return grid coordinates
 #' @export
 #' @import anticlust
 #'
@@ -47,29 +46,33 @@ compute.grid.coords <- function(coembed, genes.use, n.grids = 100){
 #' 2.2 compute KL-divergence
 #' (some are adapted from https://github.com/alexisvdb/singleCellHaystack/)
 
-#' @param coembed: the result from compute.mca
-#' @param genes.use: which genes to use; no default;
+#' @param coembed the result from compute.mca
+#' @param genes.use which genes to use; no default;
 #' can use genes based on the gene set selection or use rownames(object)
-#' @param n.grids: number of grid points used for gene set density estimation;
+#' @param n.grids number of grid points used for gene set density estimation;
 #' larger number is more accurate and slower;
 #' default is 100 (recommended to test 100 first)
 #' 'coembed', 'genes.use', 'n.grids' are passed to 'compute.grid.coords()'
-#' @param gene.set.list: a list of gene sets;
+#' @param gene.set.list a list of gene sets;
 #' e.g., gene.set.list <- list(gene.set.a = c("A", "B", "C"),
 #'                             gene.set.b = c("a", "b", "c"))
-#' @param gene.set.cutoff: gene sets with length less than this cutoff will
+#' @param gene.set.cutoff gene sets with length less than this cutoff will
 #' not be used; the length is after the intersection of the gene set and
 #' genes.use
-#' @param n.times: to evaluate how likely the gene set density is not caused
+#' @param n.times to evaluate how likely the gene set density is not caused
 #' by randomness, size-matched gene sets will be used to compute the background
 #' density distribution; This simulation will be done n.times; default is 100
+#' @return kl-divergence between given gene set and random gene sets
 #' @export
 #' @import
 #' @examples
+#' library(SeuratData)
+#' library(Seurat)
+#' data('pbmc3k')
 #' res <- compute.kld(coembed = ce,
-#'                    genes.use = rownames(pbmc3k),
+#'                    genes.use = intersect(rownames(ce), rownames(pbmc3k)),
 #'                    n.grids = 100,
-#'                    gene.set.list = gene.set.list,
+#'                    gene.set.list = gene.set.list[1:5],
 #'                    gene.set.cutoff = 3,
 #'                    n.times = 100)
 #'
@@ -144,6 +147,11 @@ compute.kld <- function(coembed, genes.use,
 #' enhanced the speed
 #' this function is called by 'compute.kld' to quickly compute the distance between
 #' genes to grid points
+#' 
+#' @param A matrix
+#' @param B matrix
+#' @return returns pairwise-distances
+#' @export
 vectorized_pdist <- function(A,B){
   an = apply(A, 1, function(rvec) crossprod(rvec,rvec))
   bn = apply(B, 1, function(rvec) crossprod(rvec,rvec))
@@ -159,6 +167,10 @@ vectorized_pdist <- function(A,B){
 #' this function is called by 'compute.kld' to aggregate the density contribution
 #' of each gene to each grid point, and then normalize the densities of grid points
 #' to 1.
+#' @param density.df an intermediate object in 'compute.kld'
+#' @return distribution
+#' @export
+
 compute.db <- function(density.df){
   Q <- apply(density.df, 2, sum)
   pseudo <- 1e-300
@@ -170,6 +182,11 @@ compute.db <- function(density.df){
 #' this function is called by 'compute.kld' to calculate the kl-divergence between
 #' sampled (background) gene set and the ref (all) gene set
 #'
+#' @param density.df density.df
+#' @param ref ref
+#' @param len.gene.set len.gene.set
+#' @return returns random klds
+#' @export
 sample.kld <- function(density.df, ref, len.gene.set){
   idx <- sample(nrow(density.df), len.gene.set, replace = F)
   rP <- compute.db(density.df = density.df[idx, ])
@@ -181,12 +198,12 @@ sample.kld <- function(density.df, ref, len.gene.set){
 #' This graph will be used for fetching the most relevant cells of a gene set
 #'
 
-#' @param coembed: the result from compute.mca
-#' @param nn.use: the number of nearest neighbors for building the graph; default 300
+#' @param coembed the result from compute.mca
+#' @param nn.use the number of nearest neighbors for building the graph; default 300
+#' @return nearest neighbor graph (edges)
 #' @export
 #' @import RANN igraph
-#' @examples
-#' el <- compute.nn.edges(coembed = ce, nn.use = 300)
+
 #'
 compute.nn.edges <- function(coembed, nn.use = 300){
   nbrs <- nn2(coembed, k = nn.use)
@@ -197,6 +214,9 @@ compute.nn.edges <- function(coembed, nn.use = 300){
 
 #' this function is called by 'compute.nn.edges' to convert nearest neighbor
 #' identity matrix to edge list
+#' @param nn2_out nn2_out
+#' @return returns edge list
+#' @export
 el_nn_search <- function(nn2_out){
   n.df <- nn2_out$nn.idx
   n.df <- cbind(1:nrow(n.df), n.df)
@@ -208,6 +228,10 @@ el_nn_search <- function(nn2_out){
 
 #' this function is to form a 'seed matrix' used by the dRWR function (dnet R package);
 #' the seed matrix is specifying which nodes are the sources for label propagation
+#' @param gene_set gene_set
+#' @param graph.use graph.use
+#' @return returns seed matrix
+#' @export
 seed.mat <- function(gene_set, graph.use){
   gs <- intersect(gene_set, names(V(graph.use)))
   ss <- data.frame(n = names(V(graph.use)))
@@ -219,6 +243,10 @@ seed.mat <- function(gene_set, graph.use){
 
 #' this function is used when more than one 'seed sets' will be used (when there
 #' are multiple gene sets of interest)
+#' @param gene_set_list gene_set_list
+#' @param graph.use graph.use
+#' @return returns seed matrix
+#' @export
 seed.mat.list <- function(gene_set_list, graph.use){
   sml <- future.apply::future_lapply(names(gene_set_list),
                                      function(x) seed.mat(gene_set = gene_set_list[[x]],
@@ -235,16 +263,14 @@ seed.mat.list <- function(gene_set_list, graph.use){
 #'
 #'
 
-#' @param el: edge list; output of 'compute.nn.edges'
-#' @param gene_set: a vector of genes of interest
-#' @param cells: name of cells; usually the same as 'colnames(object)'
+#' @param el edge list; output of 'compute.nn.edges'
+#' @param gene_set a vector of genes of interest
+#' @param cells name of cells; usually the same as 'colnames(object)'
+#' @param restart the probability of the propagation to restart
+#' @return cell vector (representing gene set activity)
 #' @export
 #' @import future future.apply dnet
-#' @examples
-#' cells <- colnames(pbmc3k)
-#' el <- compute.nn.edges(coembed = ce, nn.use = 300)
-#' gi <- "GOBP_TAXIS"
-#' cv <- run.rwr(el = el, gene_set = gene.set.list[[gi]], cells = cells)
+
 
 run.rwr <- function(el, gene_set, cells, restart = 0.75){
   g <- graph_from_edgelist(as.matrix(el), directed = F)
@@ -263,13 +289,13 @@ run.rwr <- function(el, gene_set, cells, restart = 0.75){
 #' gene sets
 #'
 
-#' @param el: edge list; output of 'compute.nn.edges'
-#' @param gene_set: a vector of genes of interest
-#' @param cells: name of cells; usually the same as 'colnames(object)'
+#' @param el edge list; output of 'compute.nn.edges'
+#' @param gene_set_list a list of gene sets
+#' @param cells name of cells; usually the same as 'colnames(object)'
+#' @param restart the probability of the propagation to restart
+#' @return activity of pathways in cells
 #' @export
-#' @examples
-#' rs <- sample(length(gene.set.list), 10, replace = F)
-#' cv.df <- run.rwr.list(el = el, gene_set_list = gene.set.list[rs], cells = cells)
+
 
 run.rwr.list <- function(el, gene_set_list, cells, restart = 0.75){
   g <- graph_from_edgelist(as.matrix(el), directed = F)
@@ -293,13 +319,11 @@ run.rwr.list <- function(el, gene_set_list, cells, restart = 0.75){
 #' 'positive' means that the cells are relevant to the gene set
 #'
 #'
-
-#' @param cell_vec: output of 'run.rwr'
+#' @param cell_vec output of 'run.rwr'
+#' @return cell label of 'negative' or 'positive' for a given pathway
 #' @export
 #' @import multimode
-#' @examples
-#' cv <- run.rwr(el = el, gene_set = gene.set.list[[gi]], cells = cells)
-#' compute.cell.label(cv)
+
 #'
 compute.cell.label <- function(cell_vec){
   nm <- names(cell_vec)
@@ -310,12 +334,11 @@ compute.cell.label <- function(cell_vec){
 }
 
 #' similar to compute.cell.label; used when working with multiple gene sets
-#' @param cell_df: output of 'run.rwr.list'
+#' @param cell_df output of 'run.rwr.list'
+#' @return cell labels of 'negative' or 'positive' for given pathways
 #' @export
 #' @import multimode
-#' @examples
-#' cell.prob.df <- run.rwr.list(el = el, gene_set_list = gene.set.list, cells = cells)
-#' cell.label.df <- compute.cell.label.df(cell.prob.df)
+
 compute.cell.label.df <- function(cell_df){
   cell.labels <- future_apply(cell_df,
                               MARGIN = 2,
@@ -331,6 +354,10 @@ compute.cell.label.df <- function(cell_df){
 #'
 #' this function is called by compute.spec.single to calculate the similarity
 #' between two vectors
+#' @param x x
+#' @param y y
+#' @return returns jsd_distance
+#' @export
 #'
 compute.jsd <- function(x, y){
   input_df <- rbind(x, y)
@@ -343,15 +370,13 @@ compute.jsd <- function(x, y){
 #' 1. the label propagation probability of cells for gene sets and
 #' 2. the identify of cells in a certain partition
 #' This is called by 'compute.spec'; can also run by itself
-#' @param vec: cell partition vector (usually a column name in object@meta.data)
-#' @param positive: the positive label, e.g. "disease" or "cluster_1"
-#' @param cell_df: the output of run.rwr.list
+#' @param vec cell partition vector (usually a column name in object@meta.data)
+#' @param positive the positive label, e.g. "disease" or "cluster_1"
+#' @param cell_df the output of run.rwr.list
+#' @return specificity of a pathway activity and other levels of cell annotations (e.g., cell type)
 #' @export
 #' @import infotheo philentropy
-#' @examples
-#' compute.spec.single(vec = object@meta.data$seurat_clusters,
-#'                     positive = "cluster_1",
-#'                     cell_df = cell_df)
+
 #'
 
 compute.spec.single <- function(vec, positive, cell_df){
@@ -367,17 +392,14 @@ compute.spec.single <- function(vec, positive, cell_df){
 #' This is to calculate the similarity between:
 #' 1. the label propagation probability of cells for gene sets and
 #' 2. the identify of cells in partitions
-
-#' @param metadata: a data frame with cell information (each row is a cell;
+#' @param cell_df the output of run.rwr.list
+#' @param metadata a data frame with cell information (each row is a cell;
 #' usually object@meta.data)
-#' @param cell_group: cell partition vector (usually a column name
+#' @param cell_group cell partition vector (usually a column name
+#' @return specificity of a pathway activity and other levels of cell annotations (e.g., cell type)
 #' in object@meta.data)
-#' @param cell_df: the output of run.rwr.list
 #' @export
-#' @examples
-#' jsd.df <- compute.spec(cell_df = cell.prob.df,
-#'                        metadata = object@meta.data,
-#'                        cell_group = "seurat_clusters")
+
 
 compute.spec <- function(cell_df, metadata, cell_group){
   gene.sets <- colnames(cell_df)
@@ -402,23 +424,19 @@ compute.spec <- function(cell_df, metadata, cell_group){
 #' randomly distributed spatially
 #'
 
-#' @param spatial.coords: a data frame with each row as a cell and each column
+#' @param spatial.coords a data frame with each row as a cell and each column
 #' as a spatial coordinate (usually 2: x and y)
-#' @param weight_vec: output of run.rwr
-#' @param n: split the spatial map for local density estimation;
+#' @param weight_vec output of run.rwr
+#' @param n split the spatial map for local density estimation;
 #' n is the number of split for each dimension; for n = 10, the spatial map is
 #' split to n * n = 100 grids for the density estimation
-#' @param n.times: the weight_vec is shuffled several times (n.times) to generate
+#' @param n.times the weight_vec is shuffled several times (n.times) to generate
 #' a background distribution (shuffled weights vs. equal weights) for statistical
 #' significance estimation (p.value); larger n.times will be more time-consuming and
 #' more accurate
+#' @return spatial kl-divergence 
 #' @export
 #' @import MASS
-#' @examples
-#' coords.df <- slide.seq@images$image@coordinates
-#' spatial.klds <- compute.spatial.kld(spatial.coords = coords.df,
-#'                                        weight_vec = cell.prob.df[, 1],
-#'                                        n = 10)
 #'
 compute.spatial.kld <- function(spatial.coords, weight_vec, n = 10, n.times = 20){
   bg.weight <- rep(1/nrow(spatial.coords), nrow(spatial.coords))
@@ -449,19 +467,15 @@ compute.spatial.kld <- function(spatial.coords, weight_vec, n = 10, n.times = 20
 #' multiple gene sets are randomly distributed spatially
 #'
 
-#' @param spatial.coords: a data frame with each row as a cell and each column
+#' @param spatial.coords a data frame with each row as a cell and each column
 #' as a spatial coordinate (usually 2: x and y)
-#' @param weight_df: output of run.rwr.list
-#' @param n: split the spatial map for local density estimation;
+#' @param weight_df output of run.rwr.list
+#' @param n split the spatial map for local density estimation;
 #' n is the number of split for each dimension; for n = 10, the spatial map is
 #' split to n * n = 100 grids for the density estimation
-#' @param n.times: the same as n.times in function 'compute.spatial.kld'
+#' @param n.times the same as n.times in function 'compute.spatial.kld'
+#' @return spatial kl-divergence for multiple gene sets
 #' @export
-#' @examples
-#' coords.df <- slide.seq@images$image@coordinates
-#' spatial.klds <- compute.spatial.kld.df(spatial.coords = coords.df,
-#'                                        weight_df = cell.prob.df,
-#'                                        n = 10, n.times = 20)
 #'
 compute.spatial.kld.df <- function(spatial.coords, weight_df, n = 10, n.times = 20){
   weight_df <- weight_df[rownames(spatial.coords), ] # make sure the order is the same
@@ -480,6 +494,12 @@ compute.spatial.kld.df <- function(spatial.coords, weight_df, n = 10, n.times = 
 #' this function is called by 'compute.spatial.kld' to calculate the kl-divergence between
 #' cell-weighted with shuffled weight vector and the ref (all cells, unweighted)
 #'
+#' @param weight_vec weight_vec
+#' @param spatial.coords spatial.coords
+#' @param n n
+#' @param ref ref
+#' @return returns randomly sampled spatial klds for gene sets
+#' @export
 sample.spatial.kld <- function(weight_vec, spatial.coords, n, ref){
   rweight_vec <- sample(weight_vec)
   rdens <- kde2d.weighted(x = spatial.coords[, 1],
@@ -495,6 +515,14 @@ sample.spatial.kld <- function(weight_vec, spatial.coords, n, ref){
 #' this is called by compute.spatial.kld to calculate the kernel density estimation
 #' in 2d space with each data point weighted.
 #'
+#' @param x x
+#' @param y y
+#' @param w w
+#' @param h h
+#' @param n n
+#' @param lims lims
+#' @return weighted kde2d estimation
+#' @export
 kde2d.weighted <- function (x, y, w, h, n, lims = c(range(x), range(y))) {
   nx <- length(x)
   if (length(y) != nx)

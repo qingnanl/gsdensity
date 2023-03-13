@@ -9,21 +9,19 @@
 \method{compute}{spec}(cell_df, metadata, cell_group)
 }
 \arguments{
-\item{metadata:}{a data frame with cell information (each row is a cell;
+\item{cell_df}{the output of run.rwr.list}
+
+\item{metadata}{a data frame with cell information (each row is a cell;
 usually object@meta.data)}
 
-\item{cell_group:}{cell partition vector (usually a column name
-in object@meta.data)}
-
-\item{cell_df:}{the output of run.rwr.list}
+\item{cell_group}{cell partition vector (usually a column name}
+}
+\value{
+specificity of a pathway activity and other levels of cell annotations (e.g., cell type)
+in object@meta.data)
 }
 \description{
 This is to calculate the similarity between:
 1. the label propagation probability of cells for gene sets and
 2. the identify of cells in partitions
-}
-\examples{
-jsd.df <- compute.spec(cell_df = cell.prob.df,
-                       metadata = object@meta.data,
-                       cell_group = "seurat_clusters")
 }

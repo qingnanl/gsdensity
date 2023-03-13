@@ -8,15 +8,14 @@ This graph will be used for fetching the most relevant cells of a gene set}
 \method{compute}{nn.edges}(coembed, nn.use = 300)
 }
 \arguments{
-\item{coembed:}{the result from compute.mca}
+\item{coembed}{the result from compute.mca}
 
-\item{nn.use:}{the number of nearest neighbors for building the graph; default 300}
+\item{nn.use}{the number of nearest neighbors for building the graph; default 300}
+}
+\value{
+nearest neighbor graph (edges)
 }
 \description{
 3. compute nearest neighbor graph for genes and cells
 This graph will be used for fetching the most relevant cells of a gene set
-}
-\examples{
-el <- compute.nn.edges(coembed = ce, nn.use = 300)
-
 }

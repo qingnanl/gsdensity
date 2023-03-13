@@ -7,6 +7,12 @@ identity matrix to edge list}
 \usage{
 el_nn_search(nn2_out)
 }
+\arguments{
+\item{nn2_out}{nn2_out}
+}
+\value{
+returns edge list
+}
 \description{
 this function is called by 'compute.nn.edges' to convert nearest neighbor
 identity matrix to edge list

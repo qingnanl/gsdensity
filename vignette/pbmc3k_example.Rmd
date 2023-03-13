@@ -120,7 +120,7 @@ gs.names # 35 gene sets
 
 # compute the deviation
 res <- compute.kld(coembed = ce, 
-                   genes.use = rownames(pbmc3k), 
+                   genes.use = intersect(rownames(ce), rownames(pbmc3k)), 
                    n.grids = 100, 
                    gene.set.list = gene.set.list[gs.names],
                    gene.set.cutoff = 3,

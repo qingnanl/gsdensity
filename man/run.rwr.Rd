@@ -6,23 +6,22 @@
 result in a vector (length = number of cells) reflecting the probability
 each cell is labeled during the propagation (relevance to the gene set)}
 \usage{
-\method{run}{rwr}(el, gene_set, cells)
+run.rwr(el, gene_set, cells, restart = 0.75)
 }
 \arguments{
-\item{el:}{edge list; output of 'compute.nn.edges'}
+\item{el}{edge list; output of 'compute.nn.edges'}
 
-\item{gene_set:}{a vector of genes of interest}
+\item{gene_set}{a vector of genes of interest}
 
-\item{cells:}{name of cells; usually the same as 'colnames(object)'}
+\item{cells}{name of cells; usually the same as 'colnames(object)'}
+
+\item{restart}{the probability of the propagation to restart}
+}
+\value{
+cell vector (representing gene set activity)
 }
 \description{
 4.1 To calculate the label propagation probability for a gene set among cells;
 result in a vector (length = number of cells) reflecting the probability
 each cell is labeled during the propagation (relevance to the gene set)
-}
-\examples{
-cells <- colnames(pbmc3k)
-el <- compute.nn.edges(coembed = ce, nn.use = 300)
-gi <- "GOBP_TAXIS"
-cv <- run.rwr(el = el, gene_set = gene.set.list[[gi]], cells = cells)
 }

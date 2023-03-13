@@ -7,12 +7,11 @@
 \method{compute}{cell.label.df}(cell_df)
 }
 \arguments{
-\item{cell_df:}{output of 'run.rwr.list'}
+\item{cell_df}{output of 'run.rwr.list'}
+}
+\value{
+cell labels of 'negative' or 'positive' for given pathways
 }
 \description{
 similar to compute.cell.label; used when working with multiple gene sets
-}
-\examples{
-cell.prob.df <- run.rwr.list(el = el, gene_set_list = gene.set.list, cells = cells)
-cell.label.df <- compute.cell.label.df(cell.prob.df)
 }

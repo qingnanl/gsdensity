@@ -7,11 +7,11 @@
 \method{compute}{mca}(object, dims.use = 1:10, genes.use = rownames(object))
 }
 \arguments{
-\item{object:}{a seurat object}
+\item{object}{a seurat object}
 
-\item{dims.use:}{which mca dimensions to use; default is the first 10 dimensions}
+\item{dims.use}{which mca dimensions to use; default is the first 10 dimensions}
 
-\item{genes.use:}{which genes to use; default is all genes in the object}
+\item{genes.use}{which genes to use; default is all genes in the object}
 }
 \value{
 returns a dataframe with cells as rows and mca coordinates as columns

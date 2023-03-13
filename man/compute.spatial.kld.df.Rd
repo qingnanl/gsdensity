@@ -8,25 +8,21 @@ multiple gene sets are randomly distributed spatially}
 \method{compute}{spatial.kld.df}(spatial.coords, weight_df, n = 10, n.times = 20)
 }
 \arguments{
-\item{spatial.coords:}{a data frame with each row as a cell and each column
+\item{spatial.coords}{a data frame with each row as a cell and each column
 as a spatial coordinate (usually 2: x and y)}
 
-\item{weight_df:}{output of run.rwr.list}
+\item{weight_df}{output of run.rwr.list}
 
-\item{n:}{split the spatial map for local density estimation;
+\item{n}{split the spatial map for local density estimation;
 n is the number of split for each dimension; for n = 10, the spatial map is
 split to n * n = 100 grids for the density estimation}
 
-\item{n.times:}{the same as n.times in function 'compute.spatial.kld'}
+\item{n.times}{the same as n.times in function 'compute.spatial.kld'}
+}
+\value{
+spatial kl-divergence for multiple gene sets
 }
 \description{
 This function is to calculate how likely the cells relevant to
 multiple gene sets are randomly distributed spatially
-}
-\examples{
-coords.df <- slide.seq@images$image@coordinates
-spatial.klds <- compute.spatial.kld.df(spatial.coords = coords.df,
-                                       weight_df = cell.prob.df,
-                                       n = 10, n.times = 20)
-
 }
