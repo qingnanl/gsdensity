@@ -3,8 +3,8 @@ title: "spatial_example_10x_visium"
 author: "Qingnan Liang"
 date: "8/22/2022"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 
@@ -157,7 +157,7 @@ spatial.klds <- compute.spatial.kld.df(spatial.coords = coords.df,
 
 # Then we want to nominate gene sets: here we want to find highly spatially related gene sets
 
-top.spatial.terms <- spatial.klds[spatial.klds > quantile(spatial.klds, 0.99)]
+top.spatial.terms <- rownames(spatial.klds[spatial.klds$spatial.kld > quantile(spatial.klds$spatial.kld, 0.9), ])
 top.spatial.terms
 
 ```
@@ -170,7 +170,7 @@ brain@meta.data$GOBP_POSITIVE_REGULATION_OF_LAMELLIPODIUM_ASSEMBLY <- cv.df[rown
                                                            "GOBP_POSITIVE_REGULATION_OF_LAMELLIPODIUM_ASSEMBLY"]
 
 SpatialFeaturePlot(brain, features = c("GOBP_POSITIVE_REGULATION_OF_LAMELLIPODIUM_ASSEMBLY")) + 
-        theme(legend.position = "top")
+  theme(legend.position = "top")
 
 ```
 
