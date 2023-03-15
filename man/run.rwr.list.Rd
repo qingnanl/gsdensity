@@ -27,3 +27,10 @@ reflecting the probability each cell is labeled during the
 propagation (relevance to the gene set); same idea as run.rwr but with multiple
 gene sets
 }
+\examples{
+
+cells <- colnames(pbmc.mtx)
+el <- gsdensity::compute.nn.edges(coembed = ce, nn.use = 300)
+cv <- run.rwr.list(el = el, gene_set = gene.set.list[1:3], cells = cells)
+
+}

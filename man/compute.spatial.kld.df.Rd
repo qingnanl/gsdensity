@@ -26,3 +26,7 @@ spatial kl-divergence for multiple gene sets
 This function is to calculate how likely the cells relevant to
 multiple gene sets are randomly distributed spatially
 }
+\examples{
+compute.spatial.kld.df(spatial.coords = coords.df, weight_df = weight_df)
+
+}

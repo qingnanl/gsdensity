@@ -19,3 +19,8 @@ nearest neighbor graph (edges)
 3. compute nearest neighbor graph for genes and cells
 This graph will be used for fetching the most relevant cells of a gene set
 }
+\examples{
+compute.nn.edges(coembed = ce)
+
+
+}

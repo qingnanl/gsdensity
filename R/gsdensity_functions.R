@@ -8,7 +8,10 @@
 #' @return returns a dataframe with cells as rows and mca coordinates as columns
 #' @export
 #' @import Seurat dplyr Matrix CelliD
+#' @examples
 #'
+#' pbmc <- Seurat::CreateSeuratObject(pbmc.mtx, meta.data = pbmc.meta)
+#' ce <- compute.mca(object = pbmc)
 #'
 compute.mca <- function(object, dims.use = 1:10, genes.use = rownames(object)){
 
@@ -35,6 +38,10 @@ compute.mca <- function(object, dims.use = 1:10, genes.use = rownames(object)){
 #' @return grid coordinates
 #' @export
 #' @import anticlust
+#'
+#' @examples
+#'
+#' compute.grid.coords(coembed = ce, genes.use = intersect(rownames(ce), rownames(pbmc.mtx)))
 #'
 compute.grid.coords <- function(coembed, genes.use, n.grids = 100){
   coembed <- scale(coembed[genes.use, ])
@@ -65,6 +72,11 @@ compute.grid.coords <- function(coembed, genes.use, n.grids = 100){
 #' @return kl-divergence between given gene set and random gene sets
 #' @export
 #' @import
+#'
+#' @examples
+#' compute.kld(coembed = ce,
+#'             genes.use = intersect(rownames(ce), rownames(pbmc.mtx)),
+#'             gene.set.list = gene.set.list[1:10])
 #'
 #'
 compute.kld <- function(coembed, genes.use,
@@ -137,7 +149,7 @@ compute.kld <- function(coembed, genes.use,
 #' enhanced the speed
 #' this function is called by 'compute.kld' to quickly compute the distance between
 #' genes to grid points
-#' 
+#'
 #' @param A matrix
 #' @param B matrix
 #' @return returns pairwise-distances
@@ -193,7 +205,9 @@ sample.kld <- function(density.df, ref, len.gene.set){
 #' @return nearest neighbor graph (edges)
 #' @export
 #' @import RANN igraph
-
+#' @examples
+#' compute.nn.edges(coembed = ce)
+#'
 #'
 compute.nn.edges <- function(coembed, nn.use = 300){
   nbrs <- nn2(coembed, k = nn.use)
@@ -222,6 +236,10 @@ el_nn_search <- function(nn2_out){
 #' @param graph.use graph.use
 #' @return returns seed matrix
 #' @export
+#'
+#' el <- gsdensity::compute.nn.edges(coembed = ce, nn.use = 300)
+#' seed.mat(gene_set = gene.set.list[1], graph.use = el)
+#'
 seed.mat <- function(gene_set, graph.use){
   gs <- intersect(gene_set, names(V(graph.use)))
   ss <- data.frame(n = names(V(graph.use)))
@@ -260,6 +278,13 @@ seed.mat.list <- function(gene_set_list, graph.use){
 #' @return cell vector (representing gene set activity)
 #' @export
 #' @import future future.apply dnet
+#'
+#' @examples
+#'
+#' cells <- colnames(pbmc.mtx)
+#' el <- gsdensity::compute.nn.edges(coembed = ce, nn.use = 300)
+#' cv <- run.rwr(el = el, gene_set = gene.set.list[1], cells = cells)
+#'
 
 
 run.rwr <- function(el, gene_set, cells, restart = 0.75){
@@ -285,6 +310,12 @@ run.rwr <- function(el, gene_set, cells, restart = 0.75){
 #' @param restart the probability of the propagation to restart
 #' @return activity of pathways in cells
 #' @export
+#' @examples
+#'
+#' cells <- colnames(pbmc.mtx)
+#' el <- gsdensity::compute.nn.edges(coembed = ce, nn.use = 300)
+#' cv <- run.rwr.list(el = el, gene_set = gene.set.list[1:3], cells = cells)
+#'
 
 
 run.rwr.list <- function(el, gene_set_list, cells, restart = 0.75){
@@ -313,7 +344,14 @@ run.rwr.list <- function(el, gene_set_list, cells, restart = 0.75){
 #' @return cell label of 'negative' or 'positive' for a given pathway
 #' @export
 #' @import multimode
-
+#' @examples
+#' cells <- colnames(pbmc.mtx)
+#' el <- gsdensity::compute.nn.edges(coembed = ce, nn.use = 300)
+#' cv <- gsdensity::run.rwr(el = el,
+#'                          gene_set = gene.set.list[["GOBP_B_CELL_ACTIVATION"]],
+#'                          cells = cells)
+#' cl <- compute.cell.label(cv)
+#'
 #'
 compute.cell.label <- function(cell_vec){
   nm <- names(cell_vec)
@@ -328,6 +366,12 @@ compute.cell.label <- function(cell_vec){
 #' @return cell labels of 'negative' or 'positive' for given pathways
 #' @export
 #' @import multimode
+#' @examples
+#' cells <- colnames(pbmc.mtx)
+#' el <- gsdensity::compute.nn.edges(coembed = ce, nn.use = 300)
+#' cv <- gsdensity::run.rwr.list(el = el, gene_set = gene.set.list[1:30], cells = cells)
+#' cl <- compute.cell.label.df(cv)
+#'
 
 compute.cell.label.df <- function(cell_df){
   cell.labels <- future_apply(cell_df,
@@ -366,7 +410,6 @@ compute.jsd <- function(x, y){
 #' @return specificity of a pathway activity and other levels of cell annotations (e.g., cell type)
 #' @export
 #' @import infotheo philentropy
-
 #'
 
 compute.spec.single <- function(vec, positive, cell_df){
@@ -389,6 +432,15 @@ compute.spec.single <- function(vec, positive, cell_df){
 #' @return specificity of a pathway activity and other levels of cell annotations (e.g., cell type)
 #' in object@meta.data)
 #' @export
+#' @examples
+#' cells <- colnames(pbmc.mtx)
+#' el <- gsdensity::compute.nn.edges(coembed = ce, nn.use = 300)
+#' cv <- gsdensity::run.rwr.list(el = el, gene_set = gene.set.list[1:30], cells = cells)
+#' jsd.df <- compute.spec(cell_df = cv,
+#'                       metadata = pbmc.meta,
+#'                       cell_group = "seurat_annotations"
+#'                      )
+#'
 
 
 compute.spec <- function(cell_df, metadata, cell_group){
@@ -424,7 +476,7 @@ compute.spec <- function(cell_df, metadata, cell_group){
 #' a background distribution (shuffled weights vs. equal weights) for statistical
 #' significance estimation (p.value); larger n.times will be more time-consuming and
 #' more accurate
-#' @return spatial kl-divergence 
+#' @return spatial kl-divergence
 #' @export
 #' @import MASS
 #'
@@ -466,6 +518,8 @@ compute.spatial.kld <- function(spatial.coords, weight_vec, n = 10, n.times = 20
 #' @param n.times the same as n.times in function 'compute.spatial.kld'
 #' @return spatial kl-divergence for multiple gene sets
 #' @export
+#' @examples
+#' compute.spatial.kld.df(spatial.coords = coords.df, weight_df = weight_df)
 #'
 compute.spatial.kld.df <- function(spatial.coords, weight_df, n = 10, n.times = 20){
   weight_df <- weight_df[rownames(spatial.coords), ] # make sure the order is the same

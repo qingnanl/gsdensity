@@ -25,3 +25,13 @@ This is to calculate the similarity between:
 1. the label propagation probability of cells for gene sets and
 2. the identify of cells in partitions
 }
+\examples{
+cells <- colnames(pbmc.mtx)
+el <- gsdensity::compute.nn.edges(coembed = ce, nn.use = 300)
+cv <- gsdensity::run.rwr.list(el = el, gene_set = gene.set.list[1:30], cells = cells)
+jsd.df <- compute.spec(cell_df = cv,
+                      metadata = pbmc.meta,
+                      cell_group = "seurat_annotations"
+                     )
+
+}

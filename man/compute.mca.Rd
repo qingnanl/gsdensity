@@ -19,3 +19,9 @@ returns a dataframe with cells as rows and mca coordinates as columns
 \description{
 1. compute MCA embeddings
 }
+\examples{
+
+pbmc <- Seurat::CreateSeuratObject(pbmc.mtx, meta.data = pbmc.meta)
+ce <- compute.mca(object = pbmc)
+
+}

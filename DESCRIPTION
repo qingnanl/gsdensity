@@ -1,13 +1,14 @@
 Package: gsdensity
 Type: Package
 Title: Density-Based Gene Set Specificity Evaluation
-Version: 0.1.1
+Version: 0.1.2
 Author: Qingnan Liang
 Maintainer: Qingnan Liang <qliang3@mdanderson.org>
 Description: Analysis frameworks for pathway heterogeneity and pathway activity evaluation in single-cell data, including scRNA-seq data and spatial genomics data.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
+LazyDataCompression:xz
 RoxygenNote: 7.2.1
 Depends: 
     R (>= 4.0)

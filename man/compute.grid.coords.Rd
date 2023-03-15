@@ -24,3 +24,8 @@ grid coordinates
 2. compute density of gene sets of interest
 2.1 compute grid point coordinates
 }
+\examples{
+
+compute.grid.coords(coembed = ce, genes.use = intersect(rownames(ce), rownames(pbmc.mtx)))
+
+}
