@@ -20,8 +20,8 @@ returns a dataframe with cells as rows and mca coordinates as columns
 1. compute MCA embeddings
 }
 \examples{
-
+\donttest{
 pbmc <- Seurat::CreateSeuratObject(pbmc.mtx, meta.data = pbmc.meta)
 ce <- compute.mca(object = pbmc)
-
+}
 }

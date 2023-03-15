@@ -25,7 +25,7 @@ grid coordinates
 2.1 compute grid point coordinates
 }
 \examples{
-
+\donttest{
 compute.grid.coords(coembed = ce, genes.use = intersect(rownames(ce), rownames(pbmc.mtx)))
-
+}
 }

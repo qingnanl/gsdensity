@@ -45,9 +45,10 @@ kl-divergence between given gene set and random gene sets
 (some are adapted from https://github.com/alexisvdb/singleCellHaystack/)
 }
 \examples{
+\donttest{
 compute.kld(coembed = ce,
             genes.use = intersect(rownames(ce), rownames(pbmc.mtx)),
             gene.set.list = gene.set.list[1:10])
-
+}
 
 }

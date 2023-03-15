@@ -26,9 +26,9 @@ result in a vector (length = number of cells) reflecting the probability
 each cell is labeled during the propagation (relevance to the gene set)
 }
 \examples{
-
+\donttest{
 cells <- colnames(pbmc.mtx)
 el <- gsdensity::compute.nn.edges(coembed = ce, nn.use = 300)
 cv <- run.rwr(el = el, gene_set = gene.set.list[1], cells = cells)
-
+}
 }

@@ -20,12 +20,13 @@ result in a binarized vector of cells with 'nagative' and 'positive' labels;
 'positive' means that the cells are relevant to the gene set
 }
 \examples{
+\donttest{
 cells <- colnames(pbmc.mtx)
 el <- gsdensity::compute.nn.edges(coembed = ce, nn.use = 300)
 cv <- gsdensity::run.rwr(el = el,
                          gene_set = gene.set.list[["GOBP_B_CELL_ACTIVATION"]],
                          cells = cells)
 cl <- compute.cell.label(cv)
-
+}
 
 }

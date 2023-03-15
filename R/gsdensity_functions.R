@@ -9,10 +9,10 @@
 #' @export
 #' @import Seurat dplyr Matrix CelliD
 #' @examples
-#'
+#' \donttest{
 #' pbmc <- Seurat::CreateSeuratObject(pbmc.mtx, meta.data = pbmc.meta)
 #' ce <- compute.mca(object = pbmc)
-#'
+#' }
 compute.mca <- function(object, dims.use = 1:10, genes.use = rownames(object)){
 
   genes.use.1 <- intersect(genes.use, rownames(object))
@@ -40,9 +40,9 @@ compute.mca <- function(object, dims.use = 1:10, genes.use = rownames(object)){
 #' @import anticlust
 #'
 #' @examples
-#'
+#' \donttest{
 #' compute.grid.coords(coembed = ce, genes.use = intersect(rownames(ce), rownames(pbmc.mtx)))
-#'
+#' }
 compute.grid.coords <- function(coembed, genes.use, n.grids = 100){
   coembed <- scale(coembed[genes.use, ])
   cl <- balanced_clustering(coembed, K = n.grids)
@@ -74,10 +74,11 @@ compute.grid.coords <- function(coembed, genes.use, n.grids = 100){
 #' @import
 #'
 #' @examples
+#' \donttest{
 #' compute.kld(coembed = ce,
 #'             genes.use = intersect(rownames(ce), rownames(pbmc.mtx)),
 #'             gene.set.list = gene.set.list[1:10])
-#'
+#' }
 #'
 compute.kld <- function(coembed, genes.use,
                         n.grids = 100,
@@ -206,8 +207,9 @@ sample.kld <- function(density.df, ref, len.gene.set){
 #' @export
 #' @import RANN igraph
 #' @examples
+#' \donttest{
 #' compute.nn.edges(coembed = ce)
-#'
+#' }
 #'
 compute.nn.edges <- function(coembed, nn.use = 300){
   nbrs <- nn2(coembed, k = nn.use)
@@ -280,11 +282,11 @@ seed.mat.list <- function(gene_set_list, graph.use){
 #' @import future future.apply dnet
 #'
 #' @examples
-#'
+#' \donttest{
 #' cells <- colnames(pbmc.mtx)
 #' el <- gsdensity::compute.nn.edges(coembed = ce, nn.use = 300)
 #' cv <- run.rwr(el = el, gene_set = gene.set.list[1], cells = cells)
-#'
+#' }
 
 
 run.rwr <- function(el, gene_set, cells, restart = 0.75){
@@ -311,11 +313,11 @@ run.rwr <- function(el, gene_set, cells, restart = 0.75){
 #' @return activity of pathways in cells
 #' @export
 #' @examples
-#'
+#' \donttest{
 #' cells <- colnames(pbmc.mtx)
 #' el <- gsdensity::compute.nn.edges(coembed = ce, nn.use = 300)
 #' cv <- run.rwr.list(el = el, gene_set = gene.set.list[1:3], cells = cells)
-#'
+#' }
 
 
 run.rwr.list <- function(el, gene_set_list, cells, restart = 0.75){
@@ -345,13 +347,14 @@ run.rwr.list <- function(el, gene_set_list, cells, restart = 0.75){
 #' @export
 #' @import multimode
 #' @examples
+#' \donttest{
 #' cells <- colnames(pbmc.mtx)
 #' el <- gsdensity::compute.nn.edges(coembed = ce, nn.use = 300)
 #' cv <- gsdensity::run.rwr(el = el,
 #'                          gene_set = gene.set.list[["GOBP_B_CELL_ACTIVATION"]],
 #'                          cells = cells)
 #' cl <- compute.cell.label(cv)
-#'
+#' }
 #'
 compute.cell.label <- function(cell_vec){
   nm <- names(cell_vec)
@@ -367,11 +370,12 @@ compute.cell.label <- function(cell_vec){
 #' @export
 #' @import multimode
 #' @examples
+#' \donttest{
 #' cells <- colnames(pbmc.mtx)
 #' el <- gsdensity::compute.nn.edges(coembed = ce, nn.use = 300)
 #' cv <- gsdensity::run.rwr.list(el = el, gene_set = gene.set.list[1:30], cells = cells)
 #' cl <- compute.cell.label.df(cv)
-#'
+#' }
 
 compute.cell.label.df <- function(cell_df){
   cell.labels <- future_apply(cell_df,
@@ -433,6 +437,7 @@ compute.spec.single <- function(vec, positive, cell_df){
 #' in object@meta.data)
 #' @export
 #' @examples
+#' \donttest{
 #' cells <- colnames(pbmc.mtx)
 #' el <- gsdensity::compute.nn.edges(coembed = ce, nn.use = 300)
 #' cv <- gsdensity::run.rwr.list(el = el, gene_set = gene.set.list[1:30], cells = cells)
@@ -440,7 +445,7 @@ compute.spec.single <- function(vec, positive, cell_df){
 #'                       metadata = pbmc.meta,
 #'                       cell_group = "seurat_annotations"
 #'                      )
-#'
+#' }
 
 
 compute.spec <- function(cell_df, metadata, cell_group){
@@ -519,6 +524,7 @@ compute.spatial.kld <- function(spatial.coords, weight_vec, n = 10, n.times = 20
 #' @return spatial kl-divergence for multiple gene sets
 #' @export
 #' @examples
+#'
 #' compute.spatial.kld.df(spatial.coords = coords.df, weight_df = weight_df)
 #'
 compute.spatial.kld.df <- function(spatial.coords, weight_df, n = 10, n.times = 20){

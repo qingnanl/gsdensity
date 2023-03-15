@@ -20,7 +20,8 @@ nearest neighbor graph (edges)
 This graph will be used for fetching the most relevant cells of a gene set
 }
 \examples{
+\donttest{
 compute.nn.edges(coembed = ce)
-
+}
 
 }

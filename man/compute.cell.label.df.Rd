@@ -16,9 +16,10 @@ cell labels of 'negative' or 'positive' for given pathways
 similar to compute.cell.label; used when working with multiple gene sets
 }
 \examples{
+\donttest{
 cells <- colnames(pbmc.mtx)
 el <- gsdensity::compute.nn.edges(coembed = ce, nn.use = 300)
 cv <- gsdensity::run.rwr.list(el = el, gene_set = gene.set.list[1:30], cells = cells)
 cl <- compute.cell.label.df(cv)
-
+}
 }
