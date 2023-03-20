@@ -27,6 +27,7 @@ library(Seurat)
 library(SeuratData)
 library(future) # for parallel computing
 library(future.apply) # for parallel computing
+library(IRanges)
 ```
 
 ## Introduction
@@ -99,6 +100,7 @@ SpatialDimPlot(brain, label = TRUE, label.size = 3)
 ##### gsdensity starts with gene sets. We first need to calculate the relevance between each cell and the gene sets. Then we use weighted two dimensional kernel density estimation (weighted kde2d) to investigate if the relevant cells show some spatial patterns.
 
 
+
 ```{r, warning=FALSE, message=FALSE}
 # Run the gsdensity pipeline; very similar to what is shown in 'pbmc3k_example'
 
@@ -149,16 +151,27 @@ head(coords.df)
 
 # compute the spatial relevance of gene sets
 
+# we first need to calculate the pathway activities for random gene sets, for controling 
+# the estimation of statistical significance
+# the parameter 'n.times' is the number of random gene sets generated for each real gene set 
+# (and approximates the gene set size). Here we use 10 for quick running purposes. In real analysis,
+# we recommend increase this to 50-100
+random.activities <- compute.random.pal.list(gene.set.list = gene.set.list[gene.set.deviated.2], 
+                                             n.times = 10, gene.use = rownames(brain), el = el, 
+                                             cells = cells)
+
 # the 'weight_df' should have a format as the output of 'run.rwr.list'; here we use the terms with at least 100 positive cells
+# the r.df is an output of 'compute.random.pal.list'. The gene set list used for running 'compute.random.pal.list' must
+# match the gene set used for spatial KLD calculation (order also need to be the same)
 # the parameter 'n' defines how to split the spatial map. n = 10 means that 10 splits are made in each dimension (total 100 grids) for the kde process
 
-spatial.klds <- compute.spatial.kld.df(spatial.coords = coords.df, 
+spatial.klds <- compute.spatial.kld.df(spatial.coords = coords.df, r.df = random.activities,
                                        weight_df = cv.df[, gene.set.deviated.2], 
                                        n = 10)
 
 # Then we want to nominate gene sets: here we want to find highly spatially related gene sets
 
-top.spatial.terms <- rownames(spatial.klds[spatial.klds$spatial.kld > quantile(spatial.klds$spatial.kld, 0.9), ])
+top.spatial.terms <- rownames(spatial.klds[spatial.klds$p.value < quantile(spatial.klds$p.value, 0.2), ])
 top.spatial.terms
 
 ```
@@ -167,10 +180,10 @@ top.spatial.terms
 # visualize some of the terms
 
 # add the label propagation probability to metadata
-brain@meta.data$GOBP_POSITIVE_REGULATION_OF_LAMELLIPODIUM_ASSEMBLY <- cv.df[rownames(brain@meta.data), 
-                                                           "GOBP_POSITIVE_REGULATION_OF_LAMELLIPODIUM_ASSEMBLY"]
+brain@meta.data$GOBP_ENSHEATHMENT_OF_NEURONS <- cv.df[rownames(brain@meta.data), 
+                                                           "GOBP_ENSHEATHMENT_OF_NEURONS"]
 
-SpatialFeaturePlot(brain, features = c("GOBP_POSITIVE_REGULATION_OF_LAMELLIPODIUM_ASSEMBLY")) + 
+SpatialFeaturePlot(brain, features = c("GOBP_ENSHEATHMENT_OF_NEURONS")) + 
   theme(legend.position = "top")
 
 ```
@@ -259,10 +272,10 @@ SpatialDimPlot(brain,
 ```{r, warning=FALSE, fig.dim = c(7, 4), message=FALSE}
 
 # add the label propagation probability to metadata for cluster_1 specific terms
-brain@meta.data$GOBP_MEMBRANE_INVAGINATION <- cv.df[rownames(brain@meta.data), 
-                                                           "GOBP_MEMBRANE_INVAGINATION"]
+brain@meta.data$GOBP_APOPTOTIC_MITOCHONDRIAL_CHANGES <- cv.df[rownames(brain@meta.data), 
+                                                           "GOBP_APOPTOTIC_MITOCHONDRIAL_CHANGES"]
 
-SpatialFeaturePlot(brain, features = c("GOBP_MEMBRANE_INVAGINATION")) + 
+SpatialFeaturePlot(brain, features = c("GOBP_APOPTOTIC_MITOCHONDRIAL_CHANGES")) + 
         theme(legend.position = "top")
 
 
@@ -270,10 +283,10 @@ SpatialFeaturePlot(brain, features = c("GOBP_MEMBRANE_INVAGINATION")) +
 ```{r, warning=FALSE, fig.dim = c(7, 4), message=FALSE}
 
 # add the label propagation probability to metadata for cluster_1 specific terms
-brain@meta.data$GOBP_CELLULAR_AMINO_ACID_CATABOLIC_PROCESS <- cv.df[rownames(brain@meta.data), 
-                                                           "GOBP_CELLULAR_AMINO_ACID_CATABOLIC_PROCESS"]
+brain@meta.data$GOBP_DOPAMINERGIC_NEURON_DIFFERENTIATION <- cv.df[rownames(brain@meta.data), 
+                                                           "GOBP_DOPAMINERGIC_NEURON_DIFFERENTIATION"]
 
-SpatialFeaturePlot(brain, features = c("GOBP_CELLULAR_AMINO_ACID_CATABOLIC_PROCESS")) + 
+SpatialFeaturePlot(brain, features = c("GOBP_DOPAMINERGIC_NEURON_DIFFERENTIATION")) + 
         theme(legend.position = "top")
 
 

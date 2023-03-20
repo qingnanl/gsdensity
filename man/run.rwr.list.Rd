@@ -7,7 +7,7 @@ reflecting the probability each cell is labeled during the
 propagation (relevance to the gene set); same idea as run.rwr but with multiple
 gene sets}
 \usage{
-run.rwr.list(el, gene_set_list, cells, restart = 0.75)
+run.rwr.list(el, gene_set_list, cells, restart = 0.75, parallel = TRUE)
 }
 \arguments{
 \item{el}{edge list; output of 'compute.nn.edges'}
@@ -17,6 +17,8 @@ run.rwr.list(el, gene_set_list, cells, restart = 0.75)
 \item{cells}{name of cells; usually the same as 'colnames(object)'}
 
 \item{restart}{the probability of the propagation to restart}
+
+\item{parallel}{whether to check parallel}
 }
 \value{
 activity of pathways in cells
