@@ -26,7 +26,7 @@ Have been tested for windows and linux systems with no problem. Running on a lin
 Installation not successful in macos with M1 chip, due to a dependency of the CelliD package (https://github.com/LTLA/scuttle/issues/14#issuecomment-989653173). Will keep testing and update when this is solved. (9/17: please check Update section #2)
 
 ```
-# First, install dependencies: Seurat, CelliD, dnet, supraHex, Rgraphviz, infotheo, anticlust, multimode, philentropy; then:
+# Development version (recommended):
 
 # install.packages("remotes")
 
@@ -36,6 +36,10 @@ Sys.setenv("R_REMOTES_NO_ERRORS_FROM_WARNINGS" = "true")
 #install from github
 remotes::install_github("https://github.com/qingnanl/gsdensity")
 
+```
+```
+# stable version
+install.packages('gsdensity')
 ```
 
 ### Usage
@@ -152,3 +156,7 @@ then run the code again
 3. (9/25/22) Now we provide statistical test for spatial relevance of gene sets with 'compute.spatial.kld' and 'compute.spatial.kld.df' functions.
 
 4. (2/27/23) Now we added a tunable parameter, "restart", for network propagation. In most cases, using the default (0.75) will give reasonable results. When the gene list is very small or many genes from the list are undetected, and the user still want to find the relatively most relevant cells, please consider setting a lower "restart", e.g., 0.5. This will let the propagation go farther.
+
+5. (3/16/23) No need to manually install the required packages. Directly install gsdensity will automatically (try to) install them.
+
+6. (3/19/23) The package is now available in CRAN (install.packages("")). The developmental version will be hosted by GitHub (recommended), and we will submit new, stable versions to CRAN timely. 
