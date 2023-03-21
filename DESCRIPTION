@@ -1,7 +1,7 @@
 Package: gsdensity
 Type: Package
 Title: Density-Based Gene Set Specificity Evaluation
-Version: 0.1.2
+Version: 0.1.3
 Authors@R: c(
   person("Qingnan, Liang", role=c("aut", "cre", "cph"), email = "qliang3@mdanderson.org"),
   person("Ken", "Chen", role=c("aut", "cph")))

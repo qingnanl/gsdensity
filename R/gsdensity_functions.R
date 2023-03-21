@@ -581,6 +581,7 @@ compute.spatial.kld <- function(spatial.coords, weight_vec, r.cv, n = 10){
   rspatial.kld <- sapply(1:n.times, function(x)compute.spatial.kld.single(weight_vec = r.cv[, x],
                                                                           n = n,
                                                                           spatial.coords = spatial.coords))
+  rspatial.kld <- rspatial.kld[rspatial.kld>0]
   rspatial.kld.avg <- mean(log(rspatial.kld))
   rspatial.kld.sd <- sd(log(rspatial.kld))
   pvalue <- pnorm(log(spatial.kld), rspatial.kld.avg, rspatial.kld.sd, lower.tail = FALSE)
@@ -596,7 +597,7 @@ compute.spatial.kld <- function(spatial.coords, weight_vec, r.cv, n = 10){
 #'
 #' @param spatial.coords a data frame with each row as a cell and each column
 #' as a spatial coordinate (usually 2: x and y)
-#' @param weight_vec output of run.rwr
+#' @param weight_df output of run.rwr
 #' @param r.df output of compute.random.pal.list
 #' @param n split the spatial map for local density estimation;
 #' n is the number of split for each dimension; for n = 10, the spatial map is
