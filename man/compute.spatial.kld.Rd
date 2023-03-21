@@ -2,11 +2,9 @@
 % Please edit documentation in R/gsdensity_functions.R
 \name{compute.spatial.kld}
 \alias{compute.spatial.kld}
-\title{This function is to calculate how likely the cells relevant to a gene set is
-randomly distributed spatially. Done by comparison between a real gene list and multiple
-random gene sets (size matched)}
+\title{6. find gene sets with spatial relevance}
 \usage{
-\method{compute}{spatial.kld}(spatial.coords, weight_vec, r.cv, n = 10)
+\method{compute}{spatial.kld}(spatial.coords, weight_vec, n = 10, n.times = 20)
 }
 \arguments{
 \item{spatial.coords}{a data frame with each row as a cell and each column
@@ -14,17 +12,19 @@ as a spatial coordinate (usually 2: x and y)}
 
 \item{weight_vec}{output of run.rwr}
 
-\item{r.cv}{a data frame for pathway acticities of randomly sampled gene sets}
-
 \item{n}{split the spatial map for local density estimation;
 n is the number of split for each dimension; for n = 10, the spatial map is
 split to n * n = 100 grids for the density estimation}
+
+\item{n.times}{the weight_vec is shuffled several times (n.times) to generate
+a background distribution (shuffled weights vs. equal weights) for statistical
+significance estimation (p.value); larger n.times will be more time-consuming and
+more accurate}
 }
 \value{
-spatial kl-divergence and statistics
+spatial kl-divergence
 }
 \description{
 This function is to calculate how likely the cells relevant to a gene set is
-randomly distributed spatially. Done by comparison between a real gene list and multiple
-random gene sets (size matched)
+randomly distributed spatially
 }

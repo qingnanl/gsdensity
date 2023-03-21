@@ -467,83 +467,26 @@ compute.spec <- function(cell_df, metadata, cell_group){
 
 #' 6. find gene sets with spatial relevance
 #'
-#' This function is called by 'compute.random.pal.list' for collecting random gene sets
-#' @param n.genes number of genes
-#' @param n.times how many simulated gene sets to generate
-#' @param gene.use background genes; usually all genes in the dataset
-#' @param el this is used for filtering genes to avoid the introduce of genes that did not pass
-#' the MCA processing
-#' @return list of gene lists
-#' @export
 #'
+#' This function is to calculate how likely the cells relevant to a gene set is
+#' randomly distributed spatially
 #'
-collect.random.set <- function(n.genes, n.times, gene.use, el){
-  gene.use <- intersect(gene.use, el[, 1])
-  r.glist <- list()
-  for (i in 1:n.times){
-    r.glist[[paste0("r.gene.set.", i)]] <- sample(gene.use, size = n.genes, replace = FALSE)
-  }
-  return(r.glist)
-}
 
-#'
-#' This function generates pathway activity calculations for random gene sets;
-#' to save computational resource, we would not simulate random gene sets for each real gene set (for size matching);
-#' instead, we will group the gene sets with similar sizes (by 10, e.g., 1-10, 11-20, 21-30,...) and use a random gene
-#' set (with size 6, 16, 26, ...) for all the real gene sets within that range.
-#' @param gene.set.list real gene list of interest
-#' @param n.times how many simulated gene sets to generate
-#' @param gene.use background genes; usually all genes in the dataset
-#' @param el this is used for filtering genes to avoid the introduce of genes that did not pass
-#' the MCA processing
-#' @param cells cells; this will be used for run.rwr
-#' @param parallel parallel parameter for dRWR; default is true
-#' @return list of two objects; first, a list of pathway acticity dataframes (for each random gene set);
-#' second, a matching file between each real gene set and each random gene set pathway acticities
-#' @export
-#'
-compute.random.pal.list <- function(gene.set.list, n.times, gene.use, el, cells, parallel = TRUE){
-  gc()
-  gss.range <- IRanges(start=seq(1, max(lengths(gene.set.list)), by = 10),
-                       width = 10)
-
-  lths <- lengths(gene.set.list)
-
-  fo <- findOverlaps(query = lths, subject = gss.range)
-
-  gss.range <- gss.range[unique(fo@to), ]
-  fo2 <- findOverlaps(query = lths, subject = gss.range)
-
-  fo2 <- as.data.frame(fo2)
-  r.glist <- future.apply::future_lapply(gss.range@start + 5,
-                                         function(x) collect.random.set(n.genes = x,
-                                                                        n.times = n.times, gene.use = gene.use,
-                                                                        el = el))
-  r.glist <- Reduce(append, r.glist)
-  names(r.glist) <- paste0("gs.", 1:length(r.glist))
-  cv.df <- run.rwr.list(el = el, gene_set_list = r.glist,parallel = parallel,
-                        cells = cells)
-  gc()
-  r.cv.list <- lapply(split(as.data.frame(t(cv.df)),rep(1:(ncol(cv.df)/n.times), each=n.times)),t)
-  return(list(cv.list = r.cv.list, matching = fo2))
-}
-
-
-#' This function is to calculate the KL-divergence between pathway-driven spatial densities
-#' and background densities. Called by compute.spatial.kld
-#'
 #' @param spatial.coords a data frame with each row as a cell and each column
 #' as a spatial coordinate (usually 2: x and y)
 #' @param weight_vec output of run.rwr
 #' @param n split the spatial map for local density estimation;
 #' n is the number of split for each dimension; for n = 10, the spatial map is
 #' split to n * n = 100 grids for the density estimation
+#' @param n.times the weight_vec is shuffled several times (n.times) to generate
+#' a background distribution (shuffled weights vs. equal weights) for statistical
+#' significance estimation (p.value); larger n.times will be more time-consuming and
+#' more accurate
 #' @return spatial kl-divergence
 #' @export
 #' @import MASS
 #'
-
-compute.spatial.kld.single <- function(spatial.coords, weight_vec, n = 10){
+compute.spatial.kld <- function(spatial.coords, weight_vec, n = 10, n.times = 20){
   bg.weight <- rep(1/nrow(spatial.coords), nrow(spatial.coords))
   bg.dens <- kde2d.weighted(x = spatial.coords[, 1],
                             y = spatial.coords[, 2],
@@ -556,32 +499,10 @@ compute.spatial.kld.single <- function(spatial.coords, weight_vec, n = 10){
                          n = n)
   P <- c(dens$z)
   spatial.kld <- sum(P * log(P/Q))
-  return(spatial.kld)
-}
-
-#' This function is to calculate how likely the cells relevant to a gene set is
-#' randomly distributed spatially. Done by comparison between a real gene list and multiple
-#' random gene sets (size matched)
-#'
-#' @param spatial.coords a data frame with each row as a cell and each column
-#' as a spatial coordinate (usually 2: x and y)
-#' @param weight_vec output of run.rwr
-#' @param r.cv a data frame for pathway acticities of randomly sampled gene sets
-#' @param n split the spatial map for local density estimation;
-#' n is the number of split for each dimension; for n = 10, the spatial map is
-#' split to n * n = 100 grids for the density estimation
-#' @return spatial kl-divergence and statistics
-#' @export
-#' @import MASS
-#'
-
-compute.spatial.kld <- function(spatial.coords, weight_vec, r.cv, n = 10){
-  spatial.kld <- compute.spatial.kld.single(spatial.coords = spatial.coords, weight_vec = weight_vec, n = n)
-  n.times <- ncol(r.cv)
-  rspatial.kld <- sapply(1:n.times, function(x)compute.spatial.kld.single(weight_vec = r.cv[, x],
-                                                                          n = n,
-                                                                          spatial.coords = spatial.coords))
-  rspatial.kld <- rspatial.kld[rspatial.kld>0]
+  rspatial.kld <- sapply(1:n.times, function(x)sample.spatial.kld(weight_vec = weight_vec,
+                                                                  ref = Q,
+                                                                  n = n,
+                                                                  spatial.coords = spatial.coords))
   rspatial.kld.avg <- mean(log(rspatial.kld))
   rspatial.kld.sd <- sd(log(rspatial.kld))
   pvalue <- pnorm(log(spatial.kld), rspatial.kld.avg, rspatial.kld.sd, lower.tail = FALSE)
@@ -590,41 +511,56 @@ compute.spatial.kld <- function(spatial.coords, weight_vec, r.cv, n = 10){
   return(spatial.kld.vec)
 }
 
-#' This function is a parallel mode of compute.spatial.kld for testing multiple gene sets
-#' to calculate how likely the cells relevant to a gene set is
-#' randomly distributed spatially. Done by comparison between a real gene list and multiple
-#' random gene sets (size matched)
+#' This function is to calculate how likely the cells relevant to
+#' multiple gene sets are randomly distributed spatially
 #'
+
 #' @param spatial.coords a data frame with each row as a cell and each column
 #' as a spatial coordinate (usually 2: x and y)
-#' @param weight_df output of run.rwr
-#' @param r.df output of compute.random.pal.list
+#' @param weight_df output of run.rwr.list
 #' @param n split the spatial map for local density estimation;
 #' n is the number of split for each dimension; for n = 10, the spatial map is
 #' split to n * n = 100 grids for the density estimation
-#' @return spatial kl-divergence and statistics
+#' @param n.times the same as n.times in function 'compute.spatial.kld'
+#' @return spatial kl-divergence for multiple gene sets
 #' @export
-#' @import MASS
 #' @examples
-#' \donttest{
-#' compute.spatial.kld.df(spatial.coords = coords.df,r.df = random.activities,
-#' weight_df = weight_df, n = 10)
-#' }
-
-
-compute.spatial.kld.df <- function(spatial.coords, weight_df, r.df, n = 10){
+#'
+#' compute.spatial.kld.df(spatial.coords = coords.df, weight_df = weight_df)
+#'
+compute.spatial.kld.df <- function(spatial.coords, weight_df, n = 10, n.times = 20){
   weight_df <- weight_df[rownames(spatial.coords), ] # make sure the order is the same
-  klds <- future.apply::future_lapply(1:ncol(weight_df),
-                                      function(x) {compute.spatial.kld(spatial.coords = spatial.coords,
-                                                                       weight_vec = weight_df[, x],
-                                                                       r.cv = r.df$cv.list[[r.df$matching[x, "subjectHits"]]],
-                                                                       n = n)})
-  klds.df <- as.data.frame(do.call(rbind, klds))
-  rownames(klds.df) <- colnames(weight_df)
+  klds <- future_apply(weight_df,
+                       MARGIN = 2, future.seed=TRUE,
+                       function(x) {compute.spatial.kld(spatial.coords = spatial.coords,
+                                                        weight_vec = x,
+                                                        n = n, n.times = n.times)})
+  klds.df <- as.data.frame(t(klds))
+  #klds.df <- do.call(rbind, klds)
+  #rownames(klds.df) <- colnames(weight_df)
   klds.df$p.adj <- p.adjust(p = klds.df$p.value, method = "fdr")
   return(klds.df)
 }
 
+#' this function is called by 'compute.spatial.kld' to calculate the kl-divergence between
+#' cell-weighted with shuffled weight vector and the ref (all cells, unweighted)
+#'
+#' @param weight_vec weight_vec
+#' @param spatial.coords spatial.coords
+#' @param n n
+#' @param ref ref
+#' @return returns randomly sampled spatial klds for gene sets
+#' @export
+sample.spatial.kld <- function(weight_vec, spatial.coords, n, ref){
+  rweight_vec <- sample(weight_vec)
+  rdens <- kde2d.weighted(x = spatial.coords[, 1],
+                          y = spatial.coords[, 2],
+                          w = rweight_vec,
+                          n = n)
+  rP <- c(rdens$z)
+  rspatial.kld <- sum(rP * log(rP/ref))
+  return(rspatial.kld)
+}
 
 #' based on https://stat.ethz.ch/pipermail/r-help/2006-June/107405.html
 #' this is called by compute.spatial.kld to calculate the kernel density estimation

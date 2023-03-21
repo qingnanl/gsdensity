@@ -50,11 +50,4 @@
 #' data(weight_df)       #Lazy loading. Data becomes visible as soon as called
 "weight_df"
 
-#' random gene set activities- matching weight_df
-#'
-#' @format A list
-#' @source {created with brain data}
-#' @examples
-#' data(random.activities)       #Lazy loading. Data becomes visible as soon as called
-"random.activities"
 
