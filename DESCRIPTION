@@ -14,4 +14,4 @@ RoxygenNote: 7.2.1
 Depends: 
     R (>= 4.0)
 Imports:
-    Seurat,CelliD,dnet,IRanges,supraHex,Rgraphviz,infotheo,anticlust,multimode,philentropy,RANN,future.apply,MASS,reshape2,dplyr,igraph,Matrix,stats
+    Seurat,CelliD,dnet,supraHex,Rgraphviz,infotheo,anticlust,multimode,philentropy,RANN,future.apply,MASS,reshape2,dplyr,igraph,Matrix,stats
