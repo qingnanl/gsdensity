@@ -13,12 +13,13 @@
 #' pbmc <- Seurat::CreateSeuratObject(pbmc.mtx, meta.data = pbmc.meta)
 #' ce <- compute.mca(object = pbmc)
 #' }
-compute.mca <- function(object, dims.use = 1:10, genes.use = rownames(object)){
+compute.mca <- function(object, dims.use = 1:10, slot = "data", 
+                        assay = "RNA", genes.use = rownames(object)){
 
   genes.use.1 <- intersect(genes.use, rownames(object))
   object <- object %>%
     NormalizeData() %>%
-    RunMCA(features = genes.use.1)
+    RunMCA(features = genes.use.1, slot = slot, assay = assay)
   genes.use.update <- intersect(genes.use.1,
                                 rownames(object@reductions$mca@feature.loadings))
   coembed <- rbind(object@reductions$mca@feature.loadings[genes.use.update, dims.use],
