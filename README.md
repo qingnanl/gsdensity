@@ -39,7 +39,8 @@ remotes::install_github("https://github.com/qingnanl/gsdensity")
 ```
 ```
 # stable version
-install.packages('gsdensity')
+# https://cran.r-project.org/src/contrib/Archive/gsdensity/
+# install.packages('gsdensity') # temporarily unavailable, see updates 7
 ```
 
 ### Usage
@@ -159,4 +160,6 @@ then run the code again
 
 5. (3/16/23) No need to manually install the required packages. Directly install gsdensity will automatically (try to) install them.
 
-6. (3/19/23) The package is now available in CRAN (install.packages("")). The developmental version will be hosted by GitHub (recommended), and we will submit new, stable versions to CRAN timely. 
+6. (3/19/23) The package is now available in CRAN (install.packages("")). The developmental version will be hosted by GitHub (recommended), and we will submit new, stable versions to CRAN timely.
+   
+7. The package is not available in CRAN for now since a dependency (dnet) was removed from CRAN. Previous versions of dnet can be downloaded here: https://cran.r-project.org/src/contrib/Archive/dnet/, and works for GSDensity. Please use the github version of GSDensity for now.  
