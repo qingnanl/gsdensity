@@ -161,7 +161,8 @@ then run the code again
 5. (3/16/23) No need to manually install the required packages. Directly install gsdensity will automatically (try to) install them.
 
 6. (3/19/23) The package is now available in CRAN (install.packages("")). The developmental version will be hosted by GitHub (recommended), and we will submit new, stable versions to CRAN timely.
+7. (6/3/24) Please use older versions of the package 'anticlust' (e.g., 0.6.1). 
    
-7. The package is not available in CRAN for now since a dependency (dnet) was removed from CRAN. Previous versions of dnet can be downloaded here: https://cran.r-project.org/src/contrib/Archive/dnet/, and works for GSDensity. Please use the github version of GSDensity for now.
+8. The package is not available in CRAN for now since a dependency (dnet) was removed from CRAN. Previous versions of dnet can be downloaded here: https://cran.r-project.org/src/contrib/Archive/dnet/, and works for GSDensity. Please use the github version of GSDensity for now.
 
-8. If you use SeuratObject version 5.0, this updated version of CellID is needed: https://bioconductor.org/packages/devel/bioc/html/CelliD.html
+9. If you use SeuratObject version 5.0, this updated version of CellID is needed: https://bioconductor.org/packages/devel/bioc/html/CelliD.html
