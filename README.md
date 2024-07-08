@@ -25,6 +25,8 @@ Have been tested for windows and linux systems with no problem. Running on a lin
 
 Installation not successful in macos with M1 chip, due to a dependency of the CelliD package (https://github.com/LTLA/scuttle/issues/14#issuecomment-989653173). Will keep testing and update when this is solved. (9/17: please check Update section #2)
 
+There is a dependency package 'anticlust' and please use older versions of the package (e.g., 0.6.1).
+
 ```
 # Development version (recommended):
 
